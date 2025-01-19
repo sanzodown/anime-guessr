@@ -1,10 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@layer base {
+  :root {
+    --background: 225 25% 7%;
+    --foreground: 210 40% 98%;
+    --card: 228 9% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 228 9% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 252 100% 69%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 228 6% 16%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 228 6% 16%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 228 6% 16%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 228 6% 16%;
+    --input: 228 6% 16%;
+    --ring: 212.7 26.8% 83.9%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(180deg,
+        hsl(225 25% 7%),
+        hsl(225 25% 3%));
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .anime-card {
+    @apply relative overflow-hidden bg-gradient-to-br from-purple-500/5 via-black to-purple-500/5 p-6 shadow-2xl shadow-purple-500/10 ring-1 ring-white/10;
+  }
+
+  .manga-input {
+    @apply rounded-full bg-black/20 px-6 py-3 text-white ring-1 ring-white/10 transition-all placeholder:text-white/40 hover:ring-primary/50 focus:ring-primary;
+  }
+
+  .manga-button {
+    @apply rounded-full bg-primary/10 px-6 py-3 font-medium text-white ring-1 ring-primary/20 transition-all hover:bg-primary/20 hover:ring-primary/40 disabled:opacity-50;
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, hsl(225 25% 15% / 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(225 25% 15% / 0.1) 1px, transparent 1px);
+    background-size: 32px 32px;
+    position: relative;
+  }
+
+  .grid-bg::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center,
+        transparent 0%,
+        hsl(225 25% 3%) 100%);
+    pointer-events: none;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes float-delayed {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+@keyframes glow {
+
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px hsl(var(--primary) / 0.5),
+      0 0 20px hsl(var(--primary) / 0.3),
+      0 0 30px hsl(var(--primary) / 0.2);
+  }
+
+  50% {
+    text-shadow:
+      0 0 15px hsl(var(--primary) / 0.7),
+      0 0 25px hsl(var(--primary) / 0.5),
+      0 0 35px hsl(var(--primary) / 0.3);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 8s ease-in-out infinite;
+  animation-delay: -4s;
+}
+
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -12,10 +137,4 @@
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
 }
