@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Command } from "cmdk"
 import { Search } from "lucide-react"
 import Fuse from "fuse.js"
+import { useDebounce } from "@/hooks/use-debounce"
 
 interface Anime {
     id: string
@@ -21,20 +22,30 @@ interface AnimeSelectProps {
     animes: Anime[]
 }
 
+const fuseOptions = {
+    keys: ["title", "titleJp"],
+    threshold: 0.4,
+    distance: 200,
+    minMatchCharLength: 2,
+    ignoreLocation: true,
+    shouldSort: true,
+    sortFn: (a: { score: number }, b: { score: number }) => a.score - b.score
+}
+
 export function AnimeSelect({ value, onSelect, placeholder = "Search...", disabled, animes }: AnimeSelectProps) {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState("")
+    const debouncedSearch = useDebounce(search, 150)
     const containerRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
+    const [activeIndex, setActiveIndex] = useState(0)
 
-    const fuse = useMemo(() => new Fuse(animes, {
-        keys: ["title", "titleJp"],
-        threshold: 0.3,
-    }), [animes])
+    const fuse = useMemo(() => new Fuse(animes, fuseOptions), [animes])
 
     const results = useMemo(() => {
-        if (!search) return animes
-        return fuse.search(search).map(result => result.item)
-    }, [search, animes, fuse])
+        if (!debouncedSearch) return animes.slice(0, 10)
+        return fuse.search(debouncedSearch, { limit: 10 }).map(result => result.item)
+    }, [debouncedSearch, animes, fuse])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -47,20 +58,58 @@ export function AnimeSelect({ value, onSelect, placeholder = "Search...", disabl
         return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [])
 
+    useEffect(() => {
+        setActiveIndex(0)
+    }, [results])
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Escape") {
+            setOpen(false)
+            return
+        }
+
+        if (!open) {
+            if (e.key === "ArrowDown" || e.key === "Enter") {
+                setOpen(true)
+                e.preventDefault()
+            }
+            return
+        }
+
+        switch (e.key) {
+            case "ArrowDown":
+                e.preventDefault()
+                setActiveIndex(i => (i + 1) % results.length)
+                break
+            case "ArrowUp":
+                e.preventDefault()
+                setActiveIndex(i => (i - 1 + results.length) % results.length)
+                break
+            case "Enter":
+                e.preventDefault()
+                if (results[activeIndex]) {
+                    onSelect(results[activeIndex])
+                    setOpen(false)
+                    setSearch("")
+                }
+                break
+            case "Tab":
+                setOpen(false)
+                break
+        }
+    }
+
     return (
         <div ref={containerRef} className="relative w-full">
             <Command
                 className="relative w-full"
                 shouldFilter={false}
-                onKeyDown={(e) => {
-                    if (e.key === "Escape") {
-                        setOpen(false)
-                    }
-                }}
+                onKeyDown={handleKeyDown}
             >
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
                     <Command.Input
+                        ref={inputRef}
                         value={search}
                         onValueChange={setSearch}
                         onFocus={() => setOpen(true)}
@@ -87,7 +136,7 @@ export function AnimeSelect({ value, onSelect, placeholder = "Search...", disabl
                         <Command.List className="max-h-[300px] overflow-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb:hover]:bg-white/20">
                             {results.length > 0 ? (
                                 <div className="space-y-1">
-                                    {results.map((anime) => (
+                                    {results.map((anime, index) => (
                                         <Command.Item
                                             key={anime.id}
                                             value={anime.title}
@@ -96,13 +145,15 @@ export function AnimeSelect({ value, onSelect, placeholder = "Search...", disabl
                                                 setOpen(false)
                                                 setSearch("")
                                             }}
-                                            className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/80 transition-colors hover:bg-white/10"
+                                            className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/80 transition-colors hover:bg-white/10 ${index === activeIndex ? "bg-white/10" : ""
+                                                }`}
                                         >
                                             {anime.imageUrl && (
                                                 <img
                                                     src={anime.imageUrl}
                                                     alt={anime.title}
                                                     className="h-8 w-6 rounded object-cover"
+                                                    loading="lazy"
                                                 />
                                             )}
                                             <div>
