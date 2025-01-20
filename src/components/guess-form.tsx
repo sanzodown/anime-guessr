@@ -63,8 +63,8 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
                 return res.json()
             })
             .then(data => {
-                if (Array.isArray(data)) {
-                    setAnimes(data)
+                if (data && Array.isArray(data.animes)) {
+                    setAnimes(data.animes)
                 } else {
                     console.error("Invalid anime data format:", data)
                     setError("Failed to load anime list")
