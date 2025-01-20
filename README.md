@@ -37,8 +37,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - All anime clips belong to their respective owners
 - Built with love for anime fans worldwide
-- Special thanks to the open-source community
-
----
-
-Made with ❤️ by [Your Name]
