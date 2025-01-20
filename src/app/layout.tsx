@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Footer } from "@/components/footer";
+import { GDPRConsent } from "@/components/gdpr-consent";
 
 export const metadata: Metadata = {
   title: "Anime Guessr - Daily Anime Challenge",
@@ -17,6 +18,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-black text-white antialiased">
         {children}
         <Footer />
+        <GDPRConsent />
       </body>
     </html>
   );
