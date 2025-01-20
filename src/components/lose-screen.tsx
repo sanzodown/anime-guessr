@@ -1,20 +1,17 @@
-"use client"
-
 import { motion } from "framer-motion"
 import { Share2, Twitter } from "lucide-react"
 
-interface SuccessScreenProps {
+interface LoseScreenProps {
     anime: {
         title: string
         titleJp: string | null
         imageUrl: string | null
     }
-    guessCount: number
 }
 
-export function SuccessScreen({ anime, guessCount }: SuccessScreenProps) {
+export function LoseScreen({ anime }: LoseScreenProps) {
     function handleShare() {
-        const text = `I just guessed today's anime on Anime Guessr in ${guessCount} ${guessCount === 1 ? 'try' : 'tries'}! It was ${anime.title} 🎯\n\nCan you guess it too? Play at:`
+        const text = `I couldn't guess today's anime on Anime Guessr. It was ${anime.title} 😔\n\nCan you do better? Play at:`
         if (navigator.share) {
             navigator.share({
                 title: "Anime Guessr",
@@ -27,7 +24,7 @@ export function SuccessScreen({ anime, guessCount }: SuccessScreenProps) {
     }
 
     function handleTweet() {
-        const text = `I just guessed today's anime on Anime Guessr in ${guessCount} ${guessCount === 1 ? 'try' : 'tries'}! It was ${anime.title} 🎯\n\nCan you guess it too? Play at:`
+        const text = `I couldn't guess today's anime on Anime Guessr. It was ${anime.title} 😔\n\nCan you do better? Play at:`
         const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`
         window.open(url, "_blank")
     }
@@ -42,7 +39,7 @@ export function SuccessScreen({ anime, guessCount }: SuccessScreenProps) {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
-                className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 text-green-400 ring-1 ring-green-500/20"
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 text-red-400 ring-1 ring-red-500/20"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -55,18 +52,13 @@ export function SuccessScreen({ anime, guessCount }: SuccessScreenProps) {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M5 13l4 4L19 7"
+                        d="M6 18L18 6M6 6l12 12"
                     />
                 </svg>
             </motion.div>
 
             <div className="text-center">
-                <h2 className="mb-2 text-xl font-semibold text-white/90">
-                    Congratulations!
-                </h2>
-                <p className="text-white/60">
-                    You got it in <span className="text-white/90">{guessCount} {guessCount === 1 ? 'try' : 'tries'}</span>!
-                </p>
+                <h2 className="mb-2 text-xl font-semibold text-white/90">Game Over!</h2>
             </div>
 
             {anime.imageUrl && (

@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react"
 import { submitGuess } from "@/app/actions"
 import { useRouter } from "next/navigation"
 import { SuccessScreen } from "./success-screen"
+import { LoseScreen } from "./lose-screen"
 import { motion } from "framer-motion"
 import { AnimeSelect } from "./anime-select"
 
@@ -27,6 +28,8 @@ interface GuessFormProps {
         }
     }
 }
+
+const MAX_TRIES = 5
 
 export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
     const router = useRouter()
@@ -89,6 +92,11 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
             return
         }
 
+        if (localGuesses.length >= MAX_TRIES) {
+            setError("You've used all your tries!")
+            return
+        }
+
         const formData = new FormData()
         formData.append("animeId", selectedAnime.id)
         formData.append("sceneId", activeScene.id)
@@ -111,6 +119,9 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
                     setTimeout(() => {
                         router.refresh()
                     }, 1000)
+                } else if (localGuesses.length + 1 >= MAX_TRIES) {
+                    // This was the last try and it was wrong
+                    setError("Game Over!")
                 } else {
                     // Show "Try again" message for incorrect guesses
                     setError("Not quite right - try again!")
@@ -123,6 +134,8 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
     }
 
     const hasCorrectGuess = localGuesses.some((guess) => guess.isCorrect)
+    const hasUsedAllTries = localGuesses.length >= MAX_TRIES
+    const remainingTries = MAX_TRIES - localGuesses.length
 
     // Show loading state during hydration
     if (!mounted) {
@@ -136,6 +149,31 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
     return (
         <div className="anime-card relative rounded-2xl p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
+                {!hasCorrectGuess && !hasUsedAllTries && (
+                    <div className={`mb-4 flex items-center justify-center gap-2 rounded-lg p-3 text-sm ${remainingTries <= 2
+                        ? "bg-red-500/10 text-red-400 ring-1 ring-red-500/20"
+                        : "bg-white/5 text-white/60 ring-1 ring-white/10"
+                        }`}>
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: MAX_TRIES }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className={`h-2 w-2 rounded-full ${i < remainingTries
+                                        ? remainingTries <= 2
+                                            ? "bg-red-400"
+                                            : "bg-white/60"
+                                        : "bg-white/10"
+                                        }`}
+                                />
+                            ))}
+                        </div>
+                        <span>
+                            {remainingTries} {remainingTries === 1 ? 'try' : 'tries'} remaining
+                            {remainingTries <= 2 && " - Choose carefully!"}
+                        </span>
+                    </div>
+                )}
+
                 <div className="relative">
                     {selectedAnime ? (
                         <div className="mb-2 flex items-center gap-3 rounded-lg bg-white/5 px-3 py-2">
@@ -172,7 +210,7 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
                                         value={selectedAnime}
                                         onSelect={setSelectedAnime}
                                         placeholder="Search for an anime..."
-                                        disabled={hasCorrectGuess || isPending}
+                                        disabled={hasCorrectGuess || hasUsedAllTries || isPending}
                                         animes={animes}
                                     />
                                 </div>
@@ -193,7 +231,7 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
 
                 <button
                     type="submit"
-                    disabled={hasCorrectGuess || isPending || isLoadingAnimes}
+                    disabled={hasCorrectGuess || hasUsedAllTries || isPending || isLoadingAnimes}
                     className="manga-button w-full"
                 >
                     {isPending ? "Checking..." : hasCorrectGuess ? "Correct!" : "Submit Guess"}
@@ -234,7 +272,17 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
                     animate={{ opacity: 1 }}
                     className="mt-8 border-t border-white/5 pt-8"
                 >
-                    <SuccessScreen anime={activeScene.anime} />
+                    <SuccessScreen anime={activeScene.anime} guessCount={localGuesses.length} />
+                </motion.div>
+            )}
+
+            {hasUsedAllTries && !hasCorrectGuess && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="mt-8 border-t border-white/5 pt-8"
+                >
+                    <LoseScreen anime={activeScene.anime} />
                 </motion.div>
             )}
         </div>

@@ -46,7 +46,7 @@ export default async function Home() {
             Anime Guessr
           </h1>
           <p className="mt-3 text-lg text-purple-200/60">
-            Guess the anime from the clip!
+            Guess which anime this clip is from in 5 tries or less!
           </p>
         </div>
 

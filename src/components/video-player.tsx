@@ -132,11 +132,11 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
                         <Button
                             onClick={handlePlay}
                             size="lg"
-                            className="group relative overflow-hidden rounded-full bg-primary px-8 py-2 transition-all hover:bg-primary/90"
+                            className="group relative overflow-hidden rounded-full bg-primary px-8 py-2 transition-all duration-300 hover:scale-105 hover:bg-primary/90 hover:shadow-[0_0_20px_2px_rgba(168,85,247,0.4)]"
                         >
                             <div className="relative flex items-center gap-2">
-                                <Play className="h-5 w-5" />
-                                <span>Start Watching</span>
+                                <Play className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
+                                <span className="transition-transform duration-300 group-hover:translate-x-1">Start Watching</span>
                             </div>
                             <div className="absolute inset-0 -z-10 bg-gradient-to-r from-primary/0 via-white/25 to-primary/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                         </Button>
