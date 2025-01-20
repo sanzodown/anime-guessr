@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { createScene } from "@/app/actions"
@@ -15,15 +15,42 @@ interface Anime {
 }
 
 interface SceneFormProps {
-    animes: Anime[]
+    onSuccess: () => void
 }
 
-export function SceneForm({ animes }: SceneFormProps) {
+export function SceneForm({ onSuccess }: SceneFormProps) {
     const router = useRouter()
     const [error, setError] = useState<string>()
     const [success, setSuccess] = useState(false)
     const [isPending, setIsPending] = useState(false)
     const [selectedAnime, setSelectedAnime] = useState<Anime | null>(null)
+    const [animes, setAnimes] = useState<Anime[]>([])
+    const [isLoadingAnimes, setIsLoadingAnimes] = useState(true)
+
+    useEffect(() => {
+        // Fetch anime list
+        setIsLoadingAnimes(true)
+        fetch("/api/animes?limit=1000")
+            .then(res => {
+                if (!res.ok) throw new Error("Failed to fetch animes")
+                return res.json()
+            })
+            .then(data => {
+                if (data && Array.isArray(data.animes)) {
+                    setAnimes(data.animes)
+                } else {
+                    console.error("Invalid anime data format:", data)
+                    setError("Failed to load anime list")
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching animes:", error)
+                setError("Failed to load anime list")
+            })
+            .finally(() => {
+                setIsLoadingAnimes(false)
+            })
+    }, [])
 
     async function clientAction(formData: FormData) {
         setError(undefined)
@@ -48,6 +75,7 @@ export function SceneForm({ animes }: SceneFormProps) {
             setSuccess(true)
             router.refresh()
             setSelectedAnime(null)
+            onSuccess()
 
             // Reset form
             const form = document.querySelector("form") as HTMLFormElement
@@ -91,12 +119,20 @@ export function SceneForm({ animes }: SceneFormProps) {
                             </button>
                         </div>
                     ) : (
-                        <AnimeSelect
-                            value={selectedAnime}
-                            onSelect={setSelectedAnime}
-                            placeholder="Search for an anime..."
-                            animes={animes}
-                        />
+                        <div className="relative">
+                            {isLoadingAnimes ? (
+                                <div className="manga-input flex h-11 w-full items-center justify-center">
+                                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-white/60" />
+                                </div>
+                            ) : (
+                                <AnimeSelect
+                                    value={selectedAnime}
+                                    onSelect={setSelectedAnime}
+                                    placeholder="Search for an anime..."
+                                    animes={animes}
+                                />
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
@@ -174,23 +210,23 @@ export function SceneForm({ animes }: SceneFormProps) {
                 </motion.p>
             )}
 
+            <button
+                type="submit"
+                disabled={isPending || isLoadingAnimes}
+                className="manga-button w-full"
+            >
+                {isPending ? "Creating..." : "Create Scene"}
+            </button>
+
             {success && (
                 <motion.p
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="text-sm text-green-400"
                 >
-                    Scene added successfully!
+                    Scene created successfully!
                 </motion.p>
             )}
-
-            <button
-                type="submit"
-                disabled={isPending}
-                className="manga-button w-full"
-            >
-                {isPending ? "Adding..." : "Add Scene"}
-            </button>
         </form>
     )
 }

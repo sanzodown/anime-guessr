@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react"
 import ReactPlayer from "react-player"
 import { motion } from "framer-motion"
+import { Play } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 interface VideoPlayerProps {
     url: string
@@ -17,6 +20,8 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
     const [isLoading, setIsLoading] = useState(true)
     const [hasError, setHasError] = useState(false)
     const [cachedUrl, setCachedUrl] = useState<string>()
+    const [isPlaying, setIsPlaying] = useState(false)
+    const [showOverlay, setShowOverlay] = useState(true)
     const playerRef = useRef<ReactPlayer>(null)
 
     useEffect(() => {
@@ -61,11 +66,19 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
         }
     }, [url])
 
+    const handlePlay = () => {
+        setIsPlaying(true)
+        setShowOverlay(false)
+    }
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={`group relative aspect-video overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/5 via-black to-purple-500/5 shadow-2xl shadow-purple-500/10 ring-1 ring-white/10 ${className ?? ""}`}
+            className={cn(
+                "group relative aspect-video overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/5 via-black to-purple-500/5 shadow-2xl shadow-purple-500/10 ring-1 ring-white/10",
+                className
+            )}
         >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
@@ -76,8 +89,8 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
                         url={cachedUrl || url}
                         width="100%"
                         height="100%"
-                        controls
-                        playing={false}
+                        controls={isPlaying}
+                        playing={isPlaying}
                         onReady={() => setIsLoading(false)}
                         onError={(e) => {
                             console.error("Video player error:", e)
@@ -103,6 +116,32 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
                         }}
                     />
                 </div>
+            )}
+
+            {showOverlay && !isLoading && !hasError && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm"
+                >
+                    <div className="max-w-md space-y-6 text-center">
+                        <h2 className="text-2xl font-bold text-white">Guess the Anime!</h2>
+                        <p className="text-sm text-white/80">
+                            Watch the scene and try to guess which anime it&apos;s from. The more accurate and faster you guess, the more points you&apos;ll earn!
+                        </p>
+                        <Button
+                            onClick={handlePlay}
+                            size="lg"
+                            className="group relative overflow-hidden rounded-full bg-primary px-8 py-2 transition-all hover:bg-primary/90"
+                        >
+                            <div className="relative flex items-center gap-2">
+                                <Play className="h-5 w-5" />
+                                <span>Start Watching</span>
+                            </div>
+                            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-primary/0 via-white/25 to-primary/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                        </Button>
+                    </div>
+                </motion.div>
             )}
 
             {isLoading && (

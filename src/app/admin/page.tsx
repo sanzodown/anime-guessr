@@ -226,7 +226,7 @@ export default function AdminPage() {
                         <div>
                             {activeTab === "scenes" ? (
                                 <div className="space-y-8">
-                                    <SceneForm animes={animes} onSuccess={fetchData} />
+                                    <SceneForm onSuccess={fetchData} />
 
                                     <div className="space-y-4">
                                         <h2 className="text-xl font-semibold">All Scenes</h2>
@@ -278,19 +278,20 @@ export default function AdminPage() {
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <h2 className="text-xl font-semibold">All Anime</h2>
-                                        <div className="flex items-center gap-4">
-                                            <input
-                                                type="search"
-                                                placeholder="Search anime..."
-                                                value={searchQuery}
-                                                onChange={(e) => {
-                                                    setSearchQuery(e.target.value)
-                                                    setPage(1)
-                                                }}
-                                                className="manga-input w-64"
-                                            />
+                                    <div className="flex items-center gap-4">
+                                        <input
+                                            type="search"
+                                            placeholder="Search anime..."
+                                            value={searchQuery}
+                                            onChange={(e) => {
+                                                setSearchQuery(e.target.value)
+                                                setPage(1)
+                                            }}
+                                            className="manga-input w-64"
+                                        />
+                                        <div className="flex items-baseline gap-2">
+                                            <h2 className="text-xl font-semibold">All Anime</h2>
+                                            <span className="text-sm text-white/60">({totalAnimes} total)</span>
                                         </div>
                                     </div>
                                     <div className="grid gap-4">

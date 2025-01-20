@@ -57,7 +57,7 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
 
         // Fetch anime list
         setIsLoadingAnimes(true)
-        fetch("/api/animes")
+        fetch("/api/animes?limit=1000")
             .then(res => {
                 if (!res.ok) throw new Error("Failed to fetch animes")
                 return res.json()

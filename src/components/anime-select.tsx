@@ -23,13 +23,17 @@ interface AnimeSelectProps {
 }
 
 const fuseOptions = {
-    keys: ["title", "titleJp"],
-    threshold: 0.4,
-    distance: 200,
+    keys: [
+        { name: "title", weight: 2 },
+        { name: "titleJp", weight: 1 }
+    ],
+    includeScore: true,
+    threshold: 0.1,
+    distance: 1000,
     minMatchCharLength: 2,
     ignoreLocation: true,
-    shouldSort: true,
-    sortFn: (a: { score: number }, b: { score: number }) => a.score - b.score
+    findAllMatches: true,
+    shouldSort: true
 }
 
 export function AnimeSelect({ value, onSelect, placeholder = "Search...", disabled, animes }: AnimeSelectProps) {
@@ -44,7 +48,26 @@ export function AnimeSelect({ value, onSelect, placeholder = "Search...", disabl
 
     const results = useMemo(() => {
         if (!debouncedSearch) return animes.slice(0, 10)
-        return fuse.search(debouncedSearch, { limit: 10 }).map(result => result.item)
+
+        // Try substring match first
+        const substringMatches = animes.filter(anime => {
+            const inTitle = anime.title.toLowerCase().includes(debouncedSearch.toLowerCase())
+            const inJp = anime.titleJp?.toLowerCase().includes(debouncedSearch.toLowerCase())
+
+            return inTitle || inJp
+        })
+
+        if (substringMatches.length > 0) {
+            return substringMatches.slice(0, 10)
+        }
+
+        const fuzzyResults = fuse.search(debouncedSearch)
+        console.log('Debug - Fuzzy results:', fuzzyResults.map(r => ({
+            title: r.item.title,
+            score: r.score
+        })))
+
+        return fuzzyResults.map(r => r.item).slice(0, 10)
     }, [debouncedSearch, animes, fuse])
 
     useEffect(() => {
