@@ -68,7 +68,7 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
         formData.append("file", file)
 
         try {
-            const response = await fetch("/api/upload", {
+            const response = await fetch("http://vps-01a2a599.vps.ovh.net:3001/upload", {
                 method: "POST",
                 body: formData
             })
