@@ -2,7 +2,6 @@ import { GuessForm } from "@/components/guess-form"
 import { VideoPlayer } from "@/components/video-player"
 import { prisma } from "@/lib/prisma"
 import { getUserGuesses } from "./actions"
-import { motion } from "framer-motion"
 import { unstable_cache } from "next/cache"
 
 const getActiveScene = unstable_cache(

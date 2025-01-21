@@ -29,7 +29,7 @@ export default function PrivacyPage() {
                         <section className="space-y-4">
                             <h2 className="text-xl font-semibold text-white/80">Overview</h2>
                             <p className="text-white/60">
-                                This privacy policy explains how Anime Guessr ("we", "us", or "our") collects, uses, and protects your information when you use our website.
+                                This privacy policy explains how Anime Guessr (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) collects, uses, and protects your information when you use our website.
                             </p>
                         </section>
 
@@ -76,7 +76,7 @@ export default function PrivacyPage() {
                         <section className="space-y-4">
                             <h2 className="text-xl font-semibold text-white/80">Cookies</h2>
                             <p className="text-white/60">
-                                We use essential cookies to:
+                                We use &ldquo;cookies&rdquo; and similar technologies to help personalize content, tailor and measure ads, and provide a better experience.
                             </p>
                             <ul className="list-inside list-disc space-y-1 text-white/60">
                                 <li>Remember your game progress</li>

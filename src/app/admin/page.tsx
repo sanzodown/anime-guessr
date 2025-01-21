@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { SceneForm } from "@/components/scene-form"
 import { logout, deleteAnime, deleteScene } from "../actions"
 import { Trash2, Pencil } from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
 
 interface Anime {
     id: string
@@ -49,36 +51,29 @@ export default function AdminPage() {
     const [editingAnime, setEditingAnime] = useState<Anime | null>(null)
     const [isEditing, setIsEditing] = useState(false)
 
-    async function fetchData() {
+    const fetchData = useCallback(async () => {
         try {
-            const [animesRes, scenesRes] = await Promise.all([
-                fetch(`/api/animes?page=${page}&limit=${limit}&search=${encodeURIComponent(searchQuery)}`),
-                fetch("/api/scenes")
-            ])
+            setIsLoading(true)
+            const response = await fetch(`/api/animes?page=${page}&limit=${limit}&search=${searchQuery}`)
+            if (!response.ok) throw new Error("Failed to fetch animes")
+            const data: AnimeResponse = await response.json()
+            setAnimes(data.animes)
+            setTotalAnimes(data.total)
 
-            if (!animesRes.ok || !scenesRes.ok) {
-                throw new Error("Failed to fetch data")
-            }
-
-            const [animesData, scenesData] = await Promise.all([
-                animesRes.json() as Promise<AnimeResponse>,
-                scenesRes.json()
-            ])
-
-            setAnimes(animesData.animes)
-            setTotalAnimes(animesData.total)
+            const scenesResponse = await fetch("/api/scenes")
+            if (!scenesResponse.ok) throw new Error("Failed to fetch scenes")
+            const scenesData = await scenesResponse.json()
             setScenes(scenesData)
-            setIsLoading(false)
-        } catch (error) {
-            console.error("Error fetching data:", error)
-            setError("Failed to load data")
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "An error occurred")
+        } finally {
             setIsLoading(false)
         }
-    }
+    }, [page, limit, searchQuery])
 
     useEffect(() => {
         fetchData()
-    }, [page, searchQuery])
+    }, [fetchData])
 
     async function handleLogout() {
         await logout()
@@ -186,9 +181,9 @@ export default function AdminPage() {
                         >
                             Logout
                         </button>
-                        <a href="/" className="manga-button">
-                            Back to Game
-                        </a>
+                        <Link href="/" className="text-purple-500 hover:text-purple-400">
+                            Back to Home
+                        </Link>
                     </div>
                 </div>
 
@@ -238,10 +233,12 @@ export default function AdminPage() {
                                                 >
                                                     <div className="flex items-center gap-4">
                                                         {scene.anime.imageUrl && (
-                                                            <img
+                                                            <Image
                                                                 src={scene.anime.imageUrl}
                                                                 alt={scene.anime.title}
-                                                                className="h-16 w-12 rounded object-cover"
+                                                                width={48}
+                                                                height={72}
+                                                                className="rounded"
                                                             />
                                                         )}
                                                         <div>
@@ -350,10 +347,12 @@ export default function AdminPage() {
                                                     <>
                                                         <div className="flex items-center gap-4">
                                                             {anime.imageUrl && (
-                                                                <img
+                                                                <Image
                                                                     src={anime.imageUrl}
                                                                     alt={anime.title}
-                                                                    className="h-16 w-12 rounded object-cover"
+                                                                    width={48}
+                                                                    height={72}
+                                                                    className="rounded"
                                                                 />
                                                             )}
                                                             <div>

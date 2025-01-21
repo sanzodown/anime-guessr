@@ -1,8 +1,11 @@
 import { hasConsented } from "./consent-manager"
 
+type GtagArgs = [string, string, Record<string, unknown>]
+
 declare global {
     interface Window {
-        gtag: (...args: any[]) => void
+        gtag: (...args: GtagArgs) => void
+        dataLayer: GtagArgs[]
     }
 }
 
@@ -24,12 +27,12 @@ export function initializeAnalytics() {
     document.head.appendChild(script)
 
     window.dataLayer = window.dataLayer || []
-    function gtag(...args: any[]) {
+    function gtag(...args: GtagArgs) {
         window.dataLayer.push(args)
     }
     window.gtag = gtag
-    gtag("js", new Date())
-    gtag("config", process.env.NEXT_PUBLIC_GA_ID, {
+    gtag("js", new Date().toISOString(), {})
+    gtag("config", process.env.NEXT_PUBLIC_GA_ID || "", {
         page_path: window.location.pathname,
     })
 }

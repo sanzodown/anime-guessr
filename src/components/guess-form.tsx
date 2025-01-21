@@ -7,6 +7,7 @@ import { SuccessScreen } from "./success-screen"
 import { LoseScreen } from "./lose-screen"
 import { motion } from "framer-motion"
 import { AnimeSelect } from "./anime-select"
+import Image from "next/image"
 
 interface Guess {
     id: string
@@ -35,7 +36,6 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
     const [error, setError] = useState<string>()
-    const [success, setSuccess] = useState<boolean>(false)
     const [mounted, setMounted] = useState(false)
     const [localGuesses, setLocalGuesses] = useState<Guess[]>([])
     const [animes, setAnimes] = useState<Array<{
@@ -85,7 +85,6 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         setError(undefined)
-        setSuccess(false)
 
         if (!selectedAnime?.id) {
             setError("Please select an anime")
@@ -114,7 +113,6 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
                 setSelectedAnime(null)
 
                 if (result.guess.isCorrect) {
-                    setSuccess(true)
                     // Wait for the success message animation before refreshing
                     setTimeout(() => {
                         router.refresh()
@@ -178,10 +176,12 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
                     {selectedAnime ? (
                         <div className="mb-2 flex items-center gap-3 rounded-lg bg-white/5 px-3 py-2">
                             {selectedAnime.imageUrl && (
-                                <img
+                                <Image
                                     src={selectedAnime.imageUrl}
                                     alt={selectedAnime.title}
-                                    className="h-8 w-6 rounded object-cover"
+                                    width={48}
+                                    height={72}
+                                    className="rounded"
                                 />
                             )}
                             <div>
@@ -207,7 +207,6 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
                             ) : (
                                 <div className="relative">
                                     <AnimeSelect
-                                        value={selectedAnime}
                                         onSelect={setSelectedAnime}
                                         placeholder="Search for an anime..."
                                         disabled={hasCorrectGuess || hasUsedAllTries || isPending}

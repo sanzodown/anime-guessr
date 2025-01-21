@@ -1,18 +1,8 @@
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { createUser } from "../actions"
 
 export default async function AuthPage() {
-    const userId = await cookies().get("userId")?.value
-
-    if (userId) {
-        redirect("/")
-    }
-
     async function handleCreateUser() {
         "use server"
-
-        const userId = await createUser()
         redirect("/")
     }
 

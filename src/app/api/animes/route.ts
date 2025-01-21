@@ -35,6 +35,7 @@ const getAnimes = unstable_cache(
 
             return { animes, total }
         } catch (error) {
+            console.error("Error with case-insensitive search:", error)
             // If the insensitive mode fails, fallback to regular case-sensitive search
             const fallbackWhere = search ? {
                 OR: [

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Share2, Twitter } from "lucide-react"
+import Image from "next/image"
 
 interface SuccessScreenProps {
     anime: {
@@ -70,18 +71,14 @@ export function SuccessScreen({ anime, guessCount }: SuccessScreenProps) {
             </div>
 
             {anime.imageUrl && (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="relative"
-                >
-                    <img
-                        src={anime.imageUrl}
-                        alt={anime.title}
-                        className="h-64 w-44 rounded-xl object-cover shadow-xl ring-1 ring-white/10"
-                    />
-                </motion.div>
+                <Image
+                    src={anime.imageUrl}
+                    alt={anime.title}
+                    width={200}
+                    height={300}
+                    className="mx-auto mb-4 rounded"
+                    priority
+                />
             )}
 
             <div className="text-center">

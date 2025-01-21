@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useEffect, useState } from "react"
 import { createScene } from "@/app/actions"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { AnimeSelect } from "./anime-select"
 import { Upload } from "lucide-react"
+import Image from "next/image"
 
 interface Anime {
     id: string
@@ -145,10 +146,12 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
                     {selectedAnime ? (
                         <div className="mb-2 flex items-center gap-3 rounded-lg bg-white/5 px-3 py-2">
                             {selectedAnime.imageUrl && (
-                                <img
+                                <Image
                                     src={selectedAnime.imageUrl}
                                     alt={selectedAnime.title}
-                                    className="h-8 w-6 rounded object-cover"
+                                    width={48}
+                                    height={72}
+                                    className="rounded"
                                 />
                             )}
                             <div>
@@ -173,7 +176,6 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
                                 </div>
                             ) : (
                                 <AnimeSelect
-                                    value={selectedAnime}
                                     onSelect={setSelectedAnime}
                                     placeholder="Search for an anime..."
                                     animes={animes}

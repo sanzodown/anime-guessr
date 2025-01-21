@@ -56,15 +56,17 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
         }
 
         cacheVideo()
+    }, [url])
 
-        // Cleanup function
+    // Separate cleanup effect
+    useEffect(() => {
         return () => {
             // Only revoke if it's a blob URL we created
             if (cachedUrl?.startsWith('blob:')) {
                 URL.revokeObjectURL(cachedUrl)
             }
         }
-    }, [url])
+    }, [cachedUrl])
 
     const handlePlay = () => {
         setIsPlaying(true)

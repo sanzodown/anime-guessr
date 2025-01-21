@@ -5,6 +5,7 @@ import { Command } from "cmdk"
 import { Search } from "lucide-react"
 import Fuse from "fuse.js"
 import { useDebounce } from "@/hooks/use-debounce"
+import Image from "next/image"
 
 interface Anime {
     id: string
@@ -15,7 +16,6 @@ interface Anime {
 }
 
 interface AnimeSelectProps {
-    value: Anime | null
     onSelect: (anime: Anime | null) => void
     placeholder?: string
     disabled?: boolean
@@ -36,7 +36,7 @@ const fuseOptions = {
     shouldSort: true
 }
 
-export function AnimeSelect({ value, onSelect, placeholder = "Search...", disabled, animes }: AnimeSelectProps) {
+export function AnimeSelect({ onSelect, placeholder = "Search...", disabled, animes }: AnimeSelectProps) {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState("")
     const debouncedSearch = useDebounce(search, 150)
@@ -172,11 +172,12 @@ export function AnimeSelect({ value, onSelect, placeholder = "Search...", disabl
                                                 }`}
                                         >
                                             {anime.imageUrl && (
-                                                <img
+                                                <Image
                                                     src={anime.imageUrl}
                                                     alt={anime.title}
-                                                    className="h-8 w-6 rounded object-cover"
-                                                    loading="lazy"
+                                                    width={48}
+                                                    height={72}
+                                                    className="rounded"
                                                 />
                                             )}
                                             <div>
