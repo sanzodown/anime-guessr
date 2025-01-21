@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState, useTransition } from "react"
+import { createScene } from "@/app/actions"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { createScene } from "@/app/actions"
 import { AnimeSelect } from "./anime-select"
+import { Upload } from "lucide-react"
 
 interface Anime {
     id: string
@@ -26,6 +27,9 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
     const [selectedAnime, setSelectedAnime] = useState<Anime | null>(null)
     const [animes, setAnimes] = useState<Anime[]>([])
     const [isLoadingAnimes, setIsLoadingAnimes] = useState(true)
+    const [uploadProgress, setUploadProgress] = useState<number>(0)
+    const [isUploading, setIsUploading] = useState(false)
+    const [videoUrl, setVideoUrl] = useState<string>("")
 
     useEffect(() => {
         // Fetch anime list
@@ -52,6 +56,40 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
             })
     }, [])
 
+    async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setError(undefined)
+        setIsUploading(true)
+        setUploadProgress(0)
+
+        const formData = new FormData()
+        formData.append("file", file)
+
+        try {
+            const response = await fetch("/api/upload", {
+                method: "POST",
+                body: formData
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || "Upload failed")
+            }
+
+            setVideoUrl(data.url)
+            setIsUploading(false)
+            setUploadProgress(100)
+        } catch (error) {
+            console.error("Upload error:", error)
+            setError("Failed to upload video. Please try again.")
+            setIsUploading(false)
+            setUploadProgress(0)
+        }
+    }
+
     async function clientAction(formData: FormData) {
         setError(undefined)
         setSuccess(false)
@@ -63,7 +101,15 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
                 return
             }
 
+            if (!videoUrl && !formData.get("videoUrl")) {
+                setError("Please provide a video URL or upload a video")
+                return
+            }
+
             formData.set("animeId", selectedAnime.id)
+            if (videoUrl) {
+                formData.set("videoUrl", videoUrl)
+            }
 
             const result = await createScene(formData)
 
@@ -75,6 +121,7 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
             setSuccess(true)
             router.refresh()
             setSelectedAnime(null)
+            setVideoUrl("")
             onSuccess()
 
             // Reset form
@@ -138,20 +185,69 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
             </div>
 
             <div className="space-y-2">
-                <label htmlFor="videoUrl" className="text-sm font-medium text-white/60">
-                    Video URL
+                <label className="text-sm font-medium text-white/60">
+                    Video
                 </label>
-                <input
-                    type="url"
-                    name="videoUrl"
-                    id="videoUrl"
-                    required
-                    className="manga-input w-full"
-                    placeholder="Enter MP4 or YouTube URL"
-                    pattern="^(https?:\/\/.+\.mp4|https?:\/\/(www\.)?youtube\.com\/watch\?v=.+|https?:\/\/youtu\.be\/.+)$"
-                />
+                <div className="space-y-4">
+                    <div className="relative">
+                        <input
+                            type="file"
+                            accept="video/*"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            id="video-upload"
+                            disabled={isUploading || Boolean(videoUrl)}
+                        />
+                        <label
+                            htmlFor="video-upload"
+                            className={`manga-input flex h-32 cursor-pointer items-center justify-center gap-3 ${videoUrl ? 'bg-white/5 ring-1 ring-white/20' : ''}`}
+                        >
+                            {videoUrl ? (
+                                <div className="text-center text-white/60">
+                                    <p className="mb-1 text-sm">Video uploaded successfully!</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setVideoUrl("")}
+                                        className="text-xs text-white/40 hover:text-white/60"
+                                    >
+                                        Remove and upload another
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="text-center text-white/60">
+                                    <Upload className="mx-auto mb-2 h-6 w-6" />
+                                    <span className="text-sm">
+                                        {isUploading ? "Uploading..." : "Click to upload video"}
+                                    </span>
+                                </div>
+                            )}
+                        </label>
+                        {isUploading && (
+                            <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg bg-white/5">
+                                <div
+                                    className="h-full bg-purple-500 transition-all duration-300"
+                                    style={{ width: `${uploadProgress}%` }}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-white/40">
+                            or
+                        </div>
+                        <input
+                            type="url"
+                            name="videoUrl"
+                            placeholder="Enter MP4 or YouTube URL"
+                            pattern="^(https?:\/\/.+\.mp4|https?:\/\/(www\.)?youtube\.com\/watch\?v=.+|https?:\/\/youtu\.be\/.+)$"
+                            className="manga-input w-full pl-10"
+                            disabled={Boolean(videoUrl)}
+                        />
+                    </div>
+                </div>
                 <p className="text-xs text-white/40">
-                    Accepts direct MP4 links or YouTube URLs
+                    Accepts MP4 files, direct MP4 links, or YouTube URLs
                 </p>
             </div>
 
@@ -212,7 +308,7 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
 
             <button
                 type="submit"
-                disabled={isPending || isLoadingAnimes}
+                disabled={isPending || isLoadingAnimes || isUploading}
                 className="manga-button w-full"
             >
                 {isPending ? "Creating..." : "Create Scene"}
