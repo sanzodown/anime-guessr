@@ -246,29 +246,28 @@ export async function deleteScene(formData: FormData) {
             return { error: "Scene not found" }
         }
 
-        // Extract filename from videoUrl
-        const filename = scene.videoUrl.split("/").pop()
-        if (!filename) {
-            return { error: "Invalid video URL format" }
-        }
-
-        // Delete the video file from VPS
-        try {
-            const deleteResponse = await fetch(`${process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL}/delete/${filename}`, {
-                method: "DELETE",
-            })
-
-            if (!deleteResponse.ok) {
-                console.error("Failed to delete video file:", await deleteResponse.text())
-            }
-        } catch (error) {
-            console.error("Error deleting video file:", error)
-        }
-
         // Delete the scene from the database
         await prisma.scene.delete({
             where: { id: sceneId }
         })
+
+        // If the video is hosted on our VPS, delete the file
+        if (scene.videoUrl.startsWith(process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL!)) {
+            const filename = scene.videoUrl.split('/').pop()
+            if (filename) {
+                try {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL}/delete/${filename}`, {
+                        method: 'DELETE',
+                    })
+
+                    if (!response.ok) {
+                        console.error(`Failed to delete video file: ${filename}`)
+                    }
+                } catch (error) {
+                    console.error('Error deleting video file:', error)
+                }
+            }
+        }
 
         revalidatePath("/admin")
         revalidatePath("/")
@@ -277,7 +276,6 @@ export async function deleteScene(formData: FormData) {
         revalidateTag("animes")
         revalidateTag("animes-list")
         revalidateTag("active-scene")
-
         return { success: true }
     } catch (error) {
         console.error("Error deleting scene:", error)
