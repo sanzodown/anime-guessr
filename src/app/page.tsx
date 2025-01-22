@@ -1,6 +1,20 @@
 import { GuessForm } from "@/components/guess-form"
 import { VideoPlayer } from "@/components/video-player"
-import { getUserGuesses, getActiveScene } from "./actions"
+import { prisma } from "@/lib/prisma"
+import { cookies } from "next/headers"
+
+async function getActiveScene() {
+  return await prisma.scene.findFirst({
+    where: { isActive: true },
+    include: { anime: true },
+  })
+}
+
+async function getUserGuesses(sceneId: string) {
+  const cookieStore = await cookies()
+  const guessesStr = cookieStore.get(`guesses-${sceneId}`)?.value
+  return guessesStr ? JSON.parse(guessesStr) : []
+}
 
 export default async function Home() {
   const activeScene = await getActiveScene()
