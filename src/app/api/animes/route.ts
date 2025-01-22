@@ -2,14 +2,15 @@ import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { unstable_cache } from "next/cache"
 import { revalidateTag } from "next/cache"
+import { Prisma } from "@prisma/client"
 
 const getAnimes = unstable_cache(
     async (page: number, limit: number, search?: string) => {
         const skip = (page - 1) * limit
-        const where = search ? {
+        const where: Prisma.AnimeWhereInput = search ? {
             OR: [
-                { title: { contains: search, mode: "insensitive" } },
-                { titleJp: { contains: search, mode: "insensitive" } }
+                { title: { mode: 'insensitive', contains: search } },
+                { titleJp: { mode: 'insensitive', contains: search } }
             ]
         } : {}
 
@@ -35,39 +36,8 @@ const getAnimes = unstable_cache(
 
             return { animes, total }
         } catch (error) {
-            console.error("Error with case-insensitive search:", error)
-            // If the insensitive mode fails, fallback to regular case-sensitive search
-            const fallbackWhere = search ? {
-                OR: [
-                    { title: { contains: search } },
-                    { titleJp: { contains: search } },
-                    { title: { contains: search.toLowerCase() } },
-                    { titleJp: { contains: search.toLowerCase() } },
-                    { title: { contains: search.toUpperCase() } },
-                    { titleJp: { contains: search.toUpperCase() } }
-                ]
-            } : {}
-
-            const [animes, total] = await Promise.all([
-                prisma.anime.findMany({
-                    where: fallbackWhere,
-                    select: {
-                        id: true,
-                        malId: true,
-                        title: true,
-                        titleJp: true,
-                        imageUrl: true,
-                    },
-                    orderBy: {
-                        title: "asc",
-                    },
-                    skip,
-                    take: limit,
-                }),
-                prisma.anime.count({ where: fallbackWhere })
-            ])
-
-            return { animes, total }
+            console.error("Error fetching animes:", error)
+            throw error
         }
     },
     ["animes-list"],

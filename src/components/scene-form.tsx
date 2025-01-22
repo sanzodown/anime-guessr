@@ -61,6 +61,17 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
         const file = e.target.files?.[0]
         if (!file) return
 
+        const maxSize = 100 * 1024 * 1024 // 100MB in bytes
+        if (file.size > maxSize) {
+            setError("File size must be less than 100MB")
+            return
+        }
+
+        if (!file.type.startsWith("video/")) {
+            setError("Please upload a valid video file")
+            return
+        }
+
         setError(undefined)
         setIsUploading(true)
         setUploadProgress(0)
@@ -69,23 +80,41 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
         formData.append("file", file)
 
         try {
-            const response = await fetch("http://vps-01a2a599.vps.ovh.net:3001/upload", {
+            const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL}${process.env.NEXT_PUBLIC_UPLOAD_ENDPOINT}`, {
                 method: "POST",
-                body: formData
+                body: formData,
+                mode: 'cors',
             })
 
-            const data = await response.json()
-
-            if (!response.ok) {
-                throw new Error(data.error || "Upload failed")
+            if (!uploadResponse.ok) {
+                const errorData = await uploadResponse.json().catch(() => ({}))
+                throw new Error(errorData.error || errorData.details || `Upload failed with status ${uploadResponse.status}`)
             }
 
+            const data = await uploadResponse.json()
             setVideoUrl(data.url)
             setIsUploading(false)
             setUploadProgress(100)
         } catch (error) {
             console.error("Upload error:", error)
-            setError("Failed to upload video. Please try again.")
+
+            // If the upload failed, try to get the latest video
+            try {
+                const latestResponse = await fetch(`${process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL}${process.env.NEXT_PUBLIC_LATEST_VIDEO_ENDPOINT}`, {
+                    mode: 'cors'
+                })
+                if (latestResponse.ok) {
+                    const data = await latestResponse.json()
+                    setVideoUrl(data.url)
+                    setIsUploading(false)
+                    setUploadProgress(100)
+                    return
+                }
+            } catch (latestError) {
+                console.error("Failed to get latest video:", latestError)
+            }
+
+            setError(error instanceof Error ? error.message : "Failed to upload video")
             setIsUploading(false)
             setUploadProgress(0)
         }

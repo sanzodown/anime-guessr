@@ -1,6 +1,8 @@
-import { PrismaClient } from '@prisma/client'
+import { config } from 'dotenv'
+import { prisma } from '../src/lib/prisma'
 
-const prisma = new PrismaClient()
+// Load environment variables
+config()
 
 interface JikanResponse {
     data: Array<{
@@ -117,7 +119,8 @@ async function main() {
 }
 
 main()
-    .catch(console.error)
-    .finally(async () => {
+    .catch(async (e) => {
+        console.error(e)
         await prisma.$disconnect()
+        process.exit(1)
     })
