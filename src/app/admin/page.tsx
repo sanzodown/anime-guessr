@@ -8,6 +8,8 @@ import { logout, deleteAnime, deleteScene } from "../actions"
 import { Trash2, Pencil } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { AnimeSearch } from "@/components/anime-search"
+import { Input } from "@/components/ui/input"
 
 interface Anime {
     id: string
@@ -274,147 +276,145 @@ export default function AdminPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-4">
-                                        <input
-                                            type="search"
-                                            placeholder="Search anime..."
-                                            value={searchQuery}
-                                            onChange={(e) => {
-                                                setSearchQuery(e.target.value)
-                                                setPage(1)
-                                            }}
-                                            className="manga-input w-64"
-                                        />
-                                        <div className="flex items-baseline gap-2">
-                                            <h2 className="text-xl font-semibold">All Anime</h2>
-                                            <span className="text-sm text-white/60">({totalAnimes} total)</span>
+                                <div className="space-y-8">
+                                    <AnimeSearch onSuccess={fetchData} />
+
+                                    <div className="space-y-4">
+                                        <h2 className="text-xl font-semibold">All Anime</h2>
+                                        <div className="flex items-center gap-4">
+                                            <Input
+                                                type="text"
+                                                placeholder="Filter anime..."
+                                                value={searchQuery}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                                                className="max-w-xs"
+                                            />
                                         </div>
-                                    </div>
-                                    <div className="grid gap-4">
-                                        {animes.map((anime) => (
-                                            <div
-                                                key={anime.id}
-                                                className="anime-card flex items-center justify-between p-4"
-                                            >
-                                                {editingAnime?.id === anime.id ? (
-                                                    <form onSubmit={handleSaveAnime} className="flex-1 pr-4">
-                                                        <div className="space-y-4">
-                                                            <div>
-                                                                <label htmlFor="title" className="block text-sm font-medium text-white/60">
-                                                                    Title
-                                                                </label>
-                                                                <input
-                                                                    type="text"
-                                                                    name="title"
-                                                                    id="title"
-                                                                    defaultValue={anime.title}
-                                                                    required
-                                                                    className="manga-input mt-1 w-full"
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label htmlFor="titleJp" className="block text-sm font-medium text-white/60">
-                                                                    Japanese Title
-                                                                </label>
-                                                                <input
-                                                                    type="text"
-                                                                    name="titleJp"
-                                                                    id="titleJp"
-                                                                    defaultValue={anime.titleJp || ""}
-                                                                    className="manga-input mt-1 w-full"
-                                                                />
-                                                            </div>
-                                                            <div className="flex gap-2">
-                                                                <button
-                                                                    type="submit"
-                                                                    disabled={isEditing}
-                                                                    className="manga-button"
-                                                                >
-                                                                    {isEditing ? "Saving..." : "Save"}
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setEditingAnime(null)}
-                                                                    className="manga-button"
-                                                                >
-                                                                    Cancel
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </form>
-                                                ) : (
-                                                    <>
-                                                        <div className="flex items-center gap-4">
-                                                            {anime.imageUrl && (
-                                                                <Image
-                                                                    src={anime.imageUrl}
-                                                                    alt={anime.title}
-                                                                    width={48}
-                                                                    height={72}
-                                                                    className="rounded"
-                                                                />
-                                                            )}
-                                                            <div>
-                                                                <div className="font-medium">
-                                                                    {anime.title}
+                                        <div className="grid gap-4">
+                                            {animes.map((anime) => (
+                                                <div
+                                                    key={anime.id}
+                                                    className="anime-card flex items-center justify-between p-4"
+                                                >
+                                                    {editingAnime?.id === anime.id ? (
+                                                        <form onSubmit={handleSaveAnime} className="flex-1 pr-4">
+                                                            <div className="space-y-4">
+                                                                <div>
+                                                                    <label htmlFor="title" className="block text-sm font-medium text-white/60">
+                                                                        Title
+                                                                    </label>
+                                                                    <input
+                                                                        type="text"
+                                                                        name="title"
+                                                                        id="title"
+                                                                        defaultValue={anime.title}
+                                                                        required
+                                                                        className="manga-input mt-1 w-full"
+                                                                    />
                                                                 </div>
-                                                                <div className="text-sm text-white/60">
-                                                                    MAL ID: {anime.malId}
+                                                                <div>
+                                                                    <label htmlFor="titleJp" className="block text-sm font-medium text-white/60">
+                                                                        Japanese Title
+                                                                    </label>
+                                                                    <input
+                                                                        type="text"
+                                                                        name="titleJp"
+                                                                        id="titleJp"
+                                                                        defaultValue={anime.titleJp || ""}
+                                                                        className="manga-input mt-1 w-full"
+                                                                    />
                                                                 </div>
-                                                                {anime.titleJp && (
-                                                                    <div className="text-sm text-white/40">
-                                                                        {anime.titleJp}
-                                                                    </div>
+                                                                <div className="flex gap-2">
+                                                                    <button
+                                                                        type="submit"
+                                                                        disabled={isEditing}
+                                                                        className="manga-button"
+                                                                    >
+                                                                        {isEditing ? "Saving..." : "Save"}
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setEditingAnime(null)}
+                                                                        className="manga-button"
+                                                                    >
+                                                                        Cancel
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    ) : (
+                                                        <>
+                                                            <div className="flex items-center gap-4">
+                                                                {anime.imageUrl && (
+                                                                    <Image
+                                                                        src={anime.imageUrl}
+                                                                        alt={anime.title}
+                                                                        width={48}
+                                                                        height={72}
+                                                                        className="rounded"
+                                                                    />
                                                                 )}
+                                                                <div>
+                                                                    <div className="font-medium">
+                                                                        {anime.title}
+                                                                    </div>
+                                                                    <div className="text-sm text-white/60">
+                                                                        MAL ID: {anime.malId}
+                                                                    </div>
+                                                                    {anime.titleJp && (
+                                                                        <div className="text-sm text-white/40">
+                                                                            {anime.titleJp}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <button
-                                                                onClick={() => handleEditAnime(anime)}
-                                                                className="rounded-lg bg-blue-500/10 p-2 text-blue-400 transition-colors hover:bg-blue-500/20"
-                                                                title="Edit anime"
-                                                            >
-                                                                <Pencil className="h-5 w-5" />
-                                                            </button>
-                                                            <form action={handleDeleteAnime}>
-                                                                <input type="hidden" name="animeId" value={anime.id} />
+                                                            <div className="flex items-center gap-2">
                                                                 <button
-                                                                    type="submit"
-                                                                    className="rounded-lg bg-red-500/10 p-2 text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50"
-                                                                    title="Delete anime"
-                                                                    disabled={isDeleting}
+                                                                    onClick={() => handleEditAnime(anime)}
+                                                                    className="rounded-lg bg-blue-500/10 p-2 text-blue-400 transition-colors hover:bg-blue-500/20"
+                                                                    title="Edit anime"
                                                                 >
-                                                                    <Trash2 className="h-5 w-5" />
+                                                                    <Pencil className="h-5 w-5" />
                                                                 </button>
-                                                            </form>
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {totalPages > 1 && (
-                                        <div className="mt-4 flex items-center justify-center gap-2">
-                                            <button
-                                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                                disabled={page === 1}
-                                                className="manga-button disabled:opacity-50"
-                                            >
-                                                Previous
-                                            </button>
-                                            <span className="text-sm text-white/60">
-                                                Page {page} of {totalPages}
-                                            </span>
-                                            <button
-                                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                                disabled={page === totalPages}
-                                                className="manga-button disabled:opacity-50"
-                                            >
-                                                Next
-                                            </button>
+                                                                <form action={handleDeleteAnime}>
+                                                                    <input type="hidden" name="animeId" value={anime.id} />
+                                                                    <button
+                                                                        type="submit"
+                                                                        className="rounded-lg bg-red-500/10 p-2 text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50"
+                                                                        title="Delete anime"
+                                                                        disabled={isDeleting}
+                                                                    >
+                                                                        <Trash2 className="h-5 w-5" />
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ))}
                                         </div>
-                                    )}
+                                        {totalPages > 1 && (
+                                            <div className="mt-4 flex items-center justify-center gap-2">
+                                                <button
+                                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                                    disabled={page === 1}
+                                                    className="manga-button disabled:opacity-50"
+                                                >
+                                                    Previous
+                                                </button>
+                                                <span className="text-sm text-white/60">
+                                                    Page {page} of {totalPages}
+                                                </span>
+                                                <button
+                                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                                    disabled={page === totalPages}
+                                                    className="manga-button disabled:opacity-50"
+                                                >
+                                                    Next
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>

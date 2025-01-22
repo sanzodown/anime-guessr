@@ -253,3 +253,30 @@ export async function deleteScene(formData: FormData) {
         return { error: "Failed to delete scene" }
     }
 }
+
+export async function getActiveScene() {
+    try {
+        return prisma.scene.findFirst({
+            where: {
+                isActive: true,
+                releaseDate: {
+                    lte: new Date(),
+                },
+            },
+            include: {
+                anime: {
+                    select: {
+                        id: true,
+                        title: true,
+                        titleJp: true,
+                        imageUrl: true,
+                        synopsis: true,
+                    }
+                }
+            },
+        })
+    } catch (error) {
+        console.error("Error fetching active scene:", error)
+        return null
+    }
+}

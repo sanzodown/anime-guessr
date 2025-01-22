@@ -1,37 +1,6 @@
 import { GuessForm } from "@/components/guess-form"
 import { VideoPlayer } from "@/components/video-player"
-import { prisma } from "@/lib/prisma"
-import { getUserGuesses } from "./actions"
-import { unstable_cache } from "next/cache"
-
-const getActiveScene = unstable_cache(
-  async () => {
-    return prisma.scene.findFirst({
-      where: {
-        isActive: true,
-        releaseDate: {
-          lte: new Date(),
-        },
-      },
-      include: {
-        anime: {
-          select: {
-            id: true,
-            title: true,
-            titleJp: true,
-            imageUrl: true,
-            synopsis: true,
-          }
-        }
-      },
-    })
-  },
-  ["active-scene"],
-  {
-    revalidate: 3600, // Cache for 1 hour
-    tags: ["active-scene"]
-  }
-)
+import { getUserGuesses, getActiveScene } from "./actions"
 
 export default async function Home() {
   const activeScene = await getActiveScene()
