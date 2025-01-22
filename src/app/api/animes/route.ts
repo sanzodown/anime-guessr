@@ -61,7 +61,7 @@ async function uploadImage(url: string, malId: number): Promise<string> {
         const buffer = await response.arrayBuffer()
         const fileName = `anime-${malId}.jpg`
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .storage
             .from("anime-images")
             .upload(fileName, buffer, {
