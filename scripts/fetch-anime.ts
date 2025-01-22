@@ -1,8 +1,14 @@
 import { config } from 'dotenv'
 import { prisma } from '../src/lib/prisma'
+import { createClient } from '@supabase/supabase-js'
 
 // Load environment variables
 config()
+
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 interface JikanResponse {
     data: Array<{
@@ -24,6 +30,36 @@ interface JikanResponse {
 
 async function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function uploadImage(url: string, malId: number): Promise<string> {
+    try {
+        const response = await fetch(url)
+        if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`)
+
+        const buffer = await response.arrayBuffer()
+        const fileName = `anime-${malId}.jpg`
+
+        const { data, error } = await supabase
+            .storage
+            .from('anime-images')
+            .upload(fileName, buffer, {
+                contentType: 'image/jpeg',
+                upsert: true
+            })
+
+        if (error) throw error
+
+        const { data: { publicUrl } } = supabase
+            .storage
+            .from('anime-images')
+            .getPublicUrl(fileName)
+
+        return publicUrl
+    } catch (error) {
+        console.error(`Error uploading image for malId ${malId}:`, error)
+        return url // Fallback to original URL if upload fails
+    }
 }
 
 async function fetchWithRetry(url: string, retries = 3, delay = 2000): Promise<JikanResponse> {
@@ -83,19 +119,22 @@ async function main() {
                 }
 
                 try {
+                    const imageUrl = anime.images.jpg.large_image_url
+                    const supabaseImageUrl = await uploadImage(imageUrl, anime.mal_id)
+
                     await prisma.anime.upsert({
                         where: { malId: anime.mal_id },
                         update: {
                             title: baseTitle,
                             titleJp: anime.title_japanese || undefined,
-                            imageUrl: anime.images.jpg.large_image_url || undefined,
+                            imageUrl: supabaseImageUrl,
                             synopsis: anime.synopsis || undefined
                         },
                         create: {
                             malId: anime.mal_id,
                             title: baseTitle,
                             titleJp: anime.title_japanese || undefined,
-                            imageUrl: anime.images.jpg.large_image_url || undefined,
+                            imageUrl: supabaseImageUrl,
                             synopsis: anime.synopsis || undefined
                         },
                     })
