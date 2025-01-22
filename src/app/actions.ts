@@ -236,9 +236,38 @@ export async function deleteScene(formData: FormData) {
 
         const { sceneId } = validatedFields.data
 
+        // Get the scene's videoUrl before deleting it
+        const scene = await prisma.scene.findUnique({
+            where: { id: sceneId },
+            select: { videoUrl: true }
+        })
+
+        if (!scene) {
+            return { error: "Scene not found" }
+        }
+
+        // Delete the scene from the database
         await prisma.scene.delete({
             where: { id: sceneId }
         })
+
+        // If the video is hosted on our VPS, delete the file
+        if (scene.videoUrl.startsWith(process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL!)) {
+            const filename = scene.videoUrl.split('/').pop()
+            if (filename) {
+                try {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL}/delete/${filename}`, {
+                        method: 'DELETE',
+                    })
+
+                    if (!response.ok) {
+                        console.error(`Failed to delete video file: ${filename}`)
+                    }
+                } catch (error) {
+                    console.error('Error deleting video file:', error)
+                }
+            }
+        }
 
         revalidatePath("/admin")
         revalidatePath("/")
