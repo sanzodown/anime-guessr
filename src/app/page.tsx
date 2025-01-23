@@ -22,7 +22,7 @@ export default async function Home() {
   const previousGuesses = activeScene ? await getUserGuesses(activeScene.id) : []
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#0A0118] px-4 py-16">
+    <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-[#0A0118] px-4 py-8">
       <div className="mx-auto max-w-2xl">
         <div className="relative z-10 flex flex-col items-center text-center">
           <Logo />
@@ -31,7 +31,7 @@ export default async function Home() {
           </p>
         </div>
 
-        <div className="relative z-10 mt-12 space-y-8">
+        <div className="relative z-10 mt-8 space-y-6">
           {activeScene ? (
             <>
               <VideoPlayer url={activeScene.videoUrl} />
