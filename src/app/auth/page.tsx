@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import { Logo } from "@/components/logo"
 
 export default async function AuthPage() {
     async function handleCreateUser() {
@@ -9,9 +10,9 @@ export default async function AuthPage() {
     return (
         <main className="grid-bg relative min-h-screen overflow-hidden px-4 py-16">
             <div className="mx-auto max-w-md text-center">
-                <h1 className="animate-glow mb-4 text-4xl font-bold tracking-tight">
-                    Welcome to Anime Guessr
-                </h1>
+                <div className="flex justify-center mb-4">
+                    <Logo />
+                </div>
                 <p className="animate-float mb-8 text-lg text-purple-200/80">
                     Test your anime knowledge with daily clips!
                 </p>

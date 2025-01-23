@@ -4,8 +4,16 @@ import { Footer } from "@/components/footer";
 import { GDPRConsent } from "@/components/gdpr-consent";
 
 export const metadata: Metadata = {
-  title: "Anime Guessr - Daily Anime Challenge",
+  title: "aniclip.in",
   description: "Test your anime knowledge with daily clips!",
+  icons: {
+    icon: [
+      {
+        url: "/favicon.svg",
+        type: "image/svg+xml",
+      }
+    ]
+  }
 };
 
 export default function RootLayout({

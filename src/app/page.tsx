@@ -2,6 +2,7 @@ import { GuessForm } from "@/components/guess-form"
 import { VideoPlayer } from "@/components/video-player"
 import { prisma } from "@/lib/prisma"
 import { cookies } from "next/headers"
+import { Logo } from "@/components/logo"
 
 async function getActiveScene() {
   return await prisma.scene.findFirst({
@@ -23,10 +24,8 @@ export default async function Home() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0A0118] px-4 py-16">
       <div className="mx-auto max-w-2xl">
-        <div className="relative z-10 text-center">
-          <h1 className="bg-gradient-to-br from-white to-white/50 bg-clip-text text-5xl font-bold tracking-tight text-transparent">
-            Anime Guessr
-          </h1>
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <Logo />
           <p className="mt-3 text-lg text-purple-200/60">
             Guess which anime this clip is from in 5 tries or less!
           </p>
