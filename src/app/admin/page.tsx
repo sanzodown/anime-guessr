@@ -1,15 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
-import { SceneForm } from "@/components/scene-form"
-import { logout, deleteAnime, deleteScene } from "../actions"
-import { Trash2, Pencil } from "lucide-react"
+import { logout } from "../actions"
 import Link from "next/link"
-import Image from "next/image"
-import { AnimeSearch } from "@/components/anime-search"
-import { Input } from "@/components/ui/input"
+import { AdminScenes } from "@/components/admin/scenes"
+import { AdminAnimes } from "@/components/admin/animes"
 
 interface Anime {
     id: string
@@ -19,13 +15,6 @@ interface Anime {
     titleEn: string | null
     imageUrl: string | null
     synopsis: string | null
-}
-
-interface AnimeResponse {
-    animes: Anime[]
-    total: number
-    page: number
-    limit: number
 }
 
 interface Scene {
@@ -42,28 +31,18 @@ interface Scene {
 export default function AdminPage() {
     const router = useRouter()
     const [animes, setAnimes] = useState<Anime[]>([])
-    const [filteredAnimes, setFilteredAnimes] = useState<Anime[]>([])
     const [scenes, setScenes] = useState<Scene[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<"scenes" | "anime">("scenes")
     const [error, setError] = useState<string>()
-    const [isDeleting, setIsDeleting] = useState(false)
-    const [searchQuery, setSearchQuery] = useState("")
-    const [page, setPage] = useState(1)
-    const [totalAnimes, setTotalAnimes] = useState(0)
-    const limit = 10
-    const [editingAnime, setEditingAnime] = useState<Anime | null>(null)
-    const [isEditing, setIsEditing] = useState(false)
 
     const fetchData = useCallback(async () => {
         try {
             setIsLoading(true)
             const response = await fetch(`/api/animes?limit=1000`)
             if (!response.ok) throw new Error("Failed to fetch animes")
-            const data: AnimeResponse = await response.json()
+            const data = await response.json()
             setAnimes(data.animes)
-            setFilteredAnimes(data.animes)
-            setTotalAnimes(data.total)
 
             const scenesResponse = await fetch("/api/scenes")
             if (!scenesResponse.ok) throw new Error("Failed to fetch scenes")
@@ -80,116 +59,11 @@ export default function AdminPage() {
         fetchData()
     }, [fetchData])
 
-    useEffect(() => {
-        if (!searchQuery.trim()) {
-            setFilteredAnimes(animes)
-            return
-        }
-
-        const query = searchQuery.toLowerCase()
-        const filtered = animes.filter(anime => {
-            return (
-                anime.title.toLowerCase().includes(query) ||
-                (anime.titleEn?.toLowerCase().includes(query)) ||
-                (anime.titleJp?.toLowerCase().includes(query))
-            )
-        })
-        setFilteredAnimes(filtered)
-    }, [searchQuery, animes])
-
     async function handleLogout() {
         await logout()
         router.push("/admin/login")
         router.refresh()
     }
-
-    async function handleDeleteAnime(formData: FormData) {
-        if (!confirm("Are you sure you want to delete this anime?")) return
-        setIsDeleting(true)
-        setError(undefined)
-
-        try {
-            const result = await deleteAnime(formData)
-            if ("error" in result) {
-                setError(result.error)
-                return
-            }
-
-            await fetchData() // Refresh both animes and scenes
-        } catch (e) {
-            console.error("Error deleting anime:", e)
-            setError("Failed to delete anime")
-        } finally {
-            setIsDeleting(false)
-        }
-    }
-
-    async function handleDeleteScene(formData: FormData) {
-        if (!confirm("Are you sure you want to delete this scene?")) return
-        setIsDeleting(true)
-        setError(undefined)
-
-        try {
-            const result = await deleteScene(formData)
-            if ("error" in result) {
-                setError(result.error)
-                return
-            }
-
-            await fetchData() // Refresh both animes and scenes
-        } catch (e) {
-            console.error("Error deleting scene:", e)
-            setError("Failed to delete scene")
-        } finally {
-            setIsDeleting(false)
-        }
-    }
-
-    async function handleEditAnime(anime: Anime) {
-        setEditingAnime(anime)
-    }
-
-    async function handleSaveAnime(e: React.FormEvent<HTMLFormElement>) {
-        e.preventDefault()
-        if (!editingAnime) return
-
-        setIsEditing(true)
-        setError(undefined)
-
-        const formData = new FormData(e.currentTarget)
-        const title = formData.get("title") as string
-        const titleEn = formData.get("titleEn") as string
-        const titleJp = formData.get("titleJp") as string
-
-        try {
-            const res = await fetch(`/api/animes`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    id: editingAnime.id,
-                    title,
-                    titleEn: titleEn || null,
-                    titleJp: titleJp || null
-                }),
-            })
-
-            if (!res.ok) {
-                throw new Error("Failed to update anime")
-            }
-
-            await fetchData()
-            setEditingAnime(null)
-        } catch (e) {
-            console.error("Error updating anime:", e)
-            setError("Failed to update anime")
-        } finally {
-            setIsEditing(false)
-        }
-    }
-
-    const totalPages = Math.ceil(totalAnimes / limit)
 
     return (
         <main className="grid-bg relative min-h-screen overflow-hidden px-4 py-16">
@@ -227,239 +101,24 @@ export default function AdminPage() {
                         </button>
                     </div>
 
-                    {error && (
-                        <motion.p
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-sm text-red-400"
-                        >
-                            {error}
-                        </motion.p>
-                    )}
-
-                    {isLoading || isDeleting ? (
+                    {isLoading ? (
                         <div className="text-center text-white/60">
-                            {isLoading ? "Loading..." : "Deleting..."}
+                            Loading...
                         </div>
                     ) : (
-                        <div>
+                        <>
                             {activeTab === "scenes" ? (
-                                <div className="space-y-8">
-                                    <SceneForm onSuccess={fetchData} />
-
-                                    <div className="space-y-4">
-                                        <h2 className="text-xl font-semibold">All Scenes</h2>
-                                        <div className="grid gap-4">
-                                            {scenes.map((scene) => (
-                                                <div
-                                                    key={scene.id}
-                                                    className="anime-card flex items-center justify-between p-4"
-                                                >
-                                                    <div className="flex items-center gap-4">
-                                                        {scene.anime.imageUrl && (
-                                                            <Image
-                                                                src={scene.anime.imageUrl}
-                                                                alt={scene.anime.title}
-                                                                width={48}
-                                                                height={72}
-                                                                className="rounded"
-                                                            />
-                                                        )}
-                                                        <div>
-                                                            <div className="font-medium">
-                                                                {scene.anime.titleEn}
-                                                            </div>
-                                                            {scene.anime.titleEn && scene.anime.titleEn !== scene.anime.title && (
-                                                                <div className="text-sm text-white/60">{scene.anime.title}</div>
-                                                            )}
-                                                            <div className="text-sm text-white/60">
-                                                                Release: {new Date(scene.releaseDate).toLocaleDateString()}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-4">
-                                                        {scene.isActive && (
-                                                            <span className="rounded-full bg-green-500/20 px-2 py-1 text-xs text-green-500">
-                                                                Active
-                                                            </span>
-                                                        )}
-                                                        <form action={handleDeleteScene}>
-                                                            <input type="hidden" name="sceneId" value={scene.id} />
-                                                            <button
-                                                                type="submit"
-                                                                className="rounded-lg bg-red-500/10 p-2 text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50"
-                                                                title="Delete scene"
-                                                                disabled={isDeleting}
-                                                            >
-                                                                <Trash2 className="h-5 w-5" />
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
+                                <AdminScenes
+                                    initialScenes={scenes}
+                                    onRefresh={fetchData}
+                                />
                             ) : (
-                                <div className="space-y-8">
-                                    <AnimeSearch onSuccess={fetchData} />
-
-                                    <div className="space-y-4">
-                                        <h2 className="text-xl font-semibold">All Anime</h2>
-                                        <div className="flex items-center gap-4">
-                                            <Input
-                                                type="text"
-                                                placeholder="Filter anime..."
-                                                value={searchQuery}
-                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                                                className="max-w-xs"
-                                            />
-                                        </div>
-                                        <div className="grid gap-4">
-                                            {filteredAnimes.map((anime) => (
-                                                <div
-                                                    key={anime.id}
-                                                    className="anime-card flex items-center justify-between p-4"
-                                                >
-                                                    {editingAnime?.id === anime.id ? (
-                                                        <form onSubmit={handleSaveAnime} className="flex-1 pr-4">
-                                                            <div className="space-y-4">
-                                                                <div>
-                                                                    <label htmlFor="title" className="block text-sm font-medium text-white/60">
-                                                                        Title
-                                                                    </label>
-                                                                    <input
-                                                                        type="text"
-                                                                        name="title"
-                                                                        id="title"
-                                                                        defaultValue={anime.title}
-                                                                        required
-                                                                        className="manga-input mt-1 w-full"
-                                                                    />
-                                                                </div>
-                                                                <div>
-                                                                    <label htmlFor="titleEn" className="block text-sm font-medium text-white/60">
-                                                                        English Title
-                                                                    </label>
-                                                                    <input
-                                                                        type="text"
-                                                                        name="titleEn"
-                                                                        id="titleEn"
-                                                                        defaultValue={anime.titleEn || ""}
-                                                                        className="manga-input mt-1 w-full"
-                                                                    />
-                                                                </div>
-                                                                <div>
-                                                                    <label htmlFor="titleJp" className="block text-sm font-medium text-white/60">
-                                                                        Japanese Title
-                                                                    </label>
-                                                                    <input
-                                                                        type="text"
-                                                                        name="titleJp"
-                                                                        id="titleJp"
-                                                                        defaultValue={anime.titleJp || ""}
-                                                                        className="manga-input mt-1 w-full"
-                                                                    />
-                                                                </div>
-                                                                <div className="flex gap-2">
-                                                                    <button
-                                                                        type="submit"
-                                                                        disabled={isEditing}
-                                                                        className="manga-button"
-                                                                    >
-                                                                        {isEditing ? "Saving..." : "Save"}
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setEditingAnime(null)}
-                                                                        className="manga-button"
-                                                                    >
-                                                                        Cancel
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </form>
-                                                    ) : (
-                                                        <>
-                                                            <div className="flex items-center gap-4">
-                                                                {anime.imageUrl && (
-                                                                    <Image
-                                                                        src={anime.imageUrl}
-                                                                        alt={anime.title}
-                                                                        width={48}
-                                                                        height={72}
-                                                                        className="rounded"
-                                                                    />
-                                                                )}
-                                                                <div>
-                                                                    <div className="font-medium">
-                                                                        {anime.titleEn || anime.title}
-                                                                    </div>
-                                                                    {anime.title !== anime.titleEn && (
-                                                                        <div className="text-sm text-white/60">
-                                                                            {anime.title}
-                                                                        </div>
-                                                                    )}
-                                                                    <div className="text-sm text-white/60">
-                                                                        MAL ID: {anime.malId}
-                                                                    </div>
-                                                                    {anime.titleJp && anime.titleJp !== anime.title && (
-                                                                        <div className="text-sm text-white/40">
-                                                                            {anime.titleJp}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <button
-                                                                    onClick={() => handleEditAnime(anime)}
-                                                                    className="rounded-lg bg-blue-500/10 p-2 text-blue-400 transition-colors hover:bg-blue-500/20"
-                                                                    title="Edit anime"
-                                                                >
-                                                                    <Pencil className="h-5 w-5" />
-                                                                </button>
-                                                                <form action={handleDeleteAnime}>
-                                                                    <input type="hidden" name="animeId" value={anime.id} />
-                                                                    <button
-                                                                        type="submit"
-                                                                        className="rounded-lg bg-red-500/10 p-2 text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50"
-                                                                        title="Delete anime"
-                                                                        disabled={isDeleting}
-                                                                    >
-                                                                        <Trash2 className="h-5 w-5" />
-                                                                    </button>
-                                                                </form>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {totalPages > 1 && (
-                                            <div className="mt-4 flex items-center justify-center gap-2">
-                                                <button
-                                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                                    disabled={page === 1}
-                                                    className="manga-button disabled:opacity-50"
-                                                >
-                                                    Previous
-                                                </button>
-                                                <span className="text-sm text-white/60">
-                                                    Page {page} of {totalPages}
-                                                </span>
-                                                <button
-                                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                                    disabled={page === totalPages}
-                                                    className="manga-button disabled:opacity-50"
-                                                >
-                                                    Next
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                                <AdminAnimes
+                                    initialAnimes={animes}
+                                    onRefresh={fetchData}
+                                />
                             )}
-                        </div>
+                        </>
                     )}
                 </div>
             </div>

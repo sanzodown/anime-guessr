@@ -18,8 +18,6 @@ const DeleteSceneSchema = z.object({
 const SceneSchema = z.object({
     animeId: z.string().min(1),
     videoUrl: z.string().min(1),
-    startTime: z.number().optional(),
-    endTime: z.number().optional(),
     releaseDate: z.string().min(1),
 })
 
@@ -64,8 +62,6 @@ export async function createScene(formData: FormData) {
         const data = {
             animeId: formData.get("animeId")?.toString(),
             videoUrl: formData.get("videoUrl")?.toString(),
-            startTime: formData.get("startTime") ? parseFloat(formData.get("startTime")?.toString() || "") : undefined,
-            endTime: formData.get("endTime") ? parseFloat(formData.get("endTime")?.toString() || "") : undefined,
             releaseDate: formData.get("releaseDate")
                 ? new Date(formData.get("releaseDate")?.toString() || "").toISOString()
                 : undefined,
@@ -80,30 +76,39 @@ export async function createScene(formData: FormData) {
             return { error: "Invalid form data" }
         }
 
-        // Deactivate any currently active scenes
-        await prisma.scene.updateMany({
-            where: {
-                isActive: true,
-            },
-            data: {
-                isActive: false,
-            },
-        })
+        // Convert release date to midnight UTC
+        const releaseDate = new Date(validatedFields.data.releaseDate)
+        releaseDate.setUTCHours(0, 0, 0, 0)
+
+        // Get today's date at midnight UTC
+        const today = new Date()
+        today.setUTCHours(0, 0, 0, 0)
 
         // Create the new scene
         const scene = await prisma.scene.create({
             data: {
                 animeId: validatedFields.data.animeId,
                 videoUrl: validatedFields.data.videoUrl,
-                startTime: validatedFields.data.startTime,
-                endTime: validatedFields.data.endTime,
-                releaseDate: validatedFields.data.releaseDate,
-                isActive: true,
+                releaseDate: releaseDate,
+                isActive: releaseDate.getTime() === today.getTime(),
             },
             include: {
                 anime: true,
             },
         })
+
+        // If this scene is for today, deactivate all other scenes
+        if (releaseDate.getTime() === today.getTime()) {
+            await prisma.scene.updateMany({
+                where: {
+                    id: { not: scene.id },
+                    isActive: true,
+                },
+                data: {
+                    isActive: false,
+                },
+            })
+        }
 
         revalidatePath("/admin")
         revalidatePath("/")
@@ -238,19 +243,21 @@ export async function deleteScene(formData: FormData) {
             return { error: "Scene not found" }
         }
 
+        // Delete the video from Supabase storage
+        try {
+            // Extract just the filename from the URL
+            const filename = scene.videoUrl.split("/").pop()
+            if (filename) {
+                await deleteVideo(filename)
+            }
+        } catch (error) {
+            console.error("Error deleting video:", error)
+        }
+
         // Delete the scene from the database
         await prisma.scene.delete({
             where: { id: sceneId }
         })
-
-        // Delete the video from Supabase storage
-        if (scene.videoUrl.includes("supabase")) {
-            try {
-                await deleteVideo(scene.videoUrl)
-            } catch (error) {
-                console.error("Error deleting video from storage:", error)
-            }
-        }
 
         revalidatePath("/admin")
         revalidatePath("/")
@@ -259,6 +266,7 @@ export async function deleteScene(formData: FormData) {
         revalidateTag("animes")
         revalidateTag("animes-list")
         revalidateTag("active-scene")
+
         return { success: true }
     } catch (error) {
         console.error("Error deleting scene:", error)

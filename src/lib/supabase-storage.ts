@@ -18,10 +18,10 @@ export async function uploadVideo(
     return data.url
 }
 
-export async function deleteVideo(url: string) {
-    if (!url) return
+export async function deleteVideo(filename: string) {
+    if (!filename) return
 
-    const response = await fetch(`/api/upload?url=${encodeURIComponent(url)}`, {
+    const response = await fetch(`/api/upload?file=${encodeURIComponent(filename)}`, {
         method: "DELETE",
     })
 

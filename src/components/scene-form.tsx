@@ -260,125 +260,72 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
                 <label className="text-sm font-medium text-white/60">
                     Video
                 </label>
-                <div className="space-y-4">
-                    <div className="relative">
-                        <input
-                            type="file"
-                            accept="video/*"
-                            onChange={handleFileUpload}
-                            className="hidden"
-                            id="video-upload"
-                            disabled={isUploading || Boolean(videoUrl)}
-                        />
-                        <label
-                            htmlFor="video-upload"
-                            className={`manga-input flex h-32 cursor-pointer items-center justify-center gap-3 ${videoUrl ? 'bg-white/5 ring-1 ring-white/20' : ''}`}
-                        >
-                            {videoUrl ? (
-                                <div className="text-center text-white/60">
-                                    <p className="mb-1 text-sm">Video uploaded successfully!</p>
-                                    <button
-                                        type="button"
-                                        onClick={() => setVideoUrl("")}
-                                        className="text-xs text-white/40 hover:text-white/60"
-                                    >
-                                        Remove and upload another
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="text-center text-white/60">
-                                    <Upload className="mx-auto mb-2 h-6 w-6" />
-                                    <span className="text-sm">
-                                        {isUploading ? "Uploading..." : "Click to upload video"}
-                                    </span>
+                <div className="relative">
+                    {videoUrl ? (
+                        <div className="flex items-center gap-3 rounded-lg bg-white/5 px-3 py-2">
+                            <div className="text-sm text-white/80">Video uploaded successfully</div>
+                            <button
+                                type="button"
+                                onClick={() => setVideoUrl("")}
+                                className="ml-auto text-sm text-white/40 hover:text-white/60"
+                            >
+                                Change
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept="video/*"
+                                onChange={handleFileUpload}
+                                className="hidden"
+                                id="video-upload"
+                            />
+                            <label
+                                htmlFor="video-upload"
+                                className="manga-input flex cursor-pointer items-center gap-2 hover:bg-white/5"
+                            >
+                                <Upload className="h-4 w-4" />
+                                <span>Upload video</span>
+                            </label>
+                        </div>
+                    )}
+                </div>
+                {isUploading && (
+                    <div className="space-y-2">
+                        <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+                            <div
+                                className="h-full bg-purple-500 transition-all duration-300"
+                                style={{ width: `${uploadState.progress}%` }}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-white/60">
+                            <div>{Math.round(uploadState.progress)}%</div>
+                            <div>{formatBytes(uploadState.speed)}/s</div>
+                            {uploadState.timeRemaining && (
+                                <div>
+                                    {Math.round(uploadState.timeRemaining)}s remaining
                                 </div>
                             )}
-                        </label>
-                        {isUploading && (
-                            <div className="absolute inset-x-0 bottom-0 space-y-1 p-2 text-xs text-white/60">
-                                <div className="flex items-center justify-between px-1">
-                                    <span>
-                                        {uploadState.speed > 0 && `${formatBytes(uploadState.speed)}/s`}
-                                    </span>
-                                    <span>{Math.round(uploadState.progress)}%</span>
-                                </div>
-                                <div className="h-1 overflow-hidden rounded-full bg-white/5">
-                                    <div
-                                        className="h-full bg-purple-500 transition-all duration-300"
-                                        style={{ width: `${uploadState.progress}%` }}
-                                    />
-                                </div>
-                                {uploadState.timeRemaining && (
-                                    <div className="text-center">
-                                        {Math.ceil(uploadState.timeRemaining)}s remaining
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-white/40">
-                            or
                         </div>
-                        <input
-                            type="url"
-                            name="videoUrl"
-                            placeholder="Enter MP4 or YouTube URL"
-                            pattern="^(https?:\/\/.+\.mp4|https?:\/\/(www\.)?youtube\.com\/watch\?v=.+|https?:\/\/youtu\.be\/.+)$"
-                            className="manga-input w-full pl-10"
-                            disabled={Boolean(videoUrl)}
-                        />
                     </div>
-                </div>
-                <p className="text-xs text-white/40">
-                    Accepts MP4 files, direct MP4 links, or YouTube URLs
-                </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <label htmlFor="startTime" className="text-sm font-medium text-white/60">
-                        Start Time (seconds)
-                    </label>
-                    <input
-                        type="number"
-                        name="startTime"
-                        id="startTime"
-                        min={0}
-                        step="any"
-                        className="manga-input w-full"
-                        placeholder="Optional"
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <label htmlFor="endTime" className="text-sm font-medium text-white/60">
-                        End Time (seconds)
-                    </label>
-                    <input
-                        type="number"
-                        name="endTime"
-                        id="endTime"
-                        min={1}
-                        step="any"
-                        className="manga-input w-full"
-                        placeholder="Optional"
-                    />
-                </div>
+                )}
             </div>
 
             <div className="space-y-2">
-                <label htmlFor="releaseDate" className="text-sm font-medium text-white/60">
+                <label className="text-sm font-medium text-white/60">
                     Release Date
                 </label>
                 <input
-                    type="datetime-local"
+                    type="date"
                     name="releaseDate"
-                    id="releaseDate"
                     required
-                    className="manga-input w-full"
+                    className="manga-input"
+                    min={new Date().toISOString().split("T")[0]}
                 />
+                <div className="text-xs text-white/40">
+                    The scene will be automatically activated at midnight on this date
+                </div>
             </div>
 
             {error && (
@@ -391,14 +338,6 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
                 </motion.p>
             )}
 
-            <button
-                type="submit"
-                disabled={isPending || isLoadingAnimes || isUploading}
-                className="manga-button w-full"
-            >
-                {isPending ? "Creating..." : "Create Scene"}
-            </button>
-
             {success && (
                 <motion.p
                     initial={{ opacity: 0, y: -10 }}
@@ -408,6 +347,14 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
                     Scene created successfully!
                 </motion.p>
             )}
+
+            <button
+                type="submit"
+                disabled={isPending || isUploading}
+                className="manga-button w-full disabled:opacity-50"
+            >
+                {isPending ? "Creating..." : "Create Scene"}
+            </button>
         </form>
     )
 }

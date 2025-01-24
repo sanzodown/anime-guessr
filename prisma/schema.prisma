@@ -31,8 +31,6 @@ model Scene {
   anime       Anime    @relation(fields: [animeId], references: [id])
   animeId     String
   videoUrl    String
-  startTime   Int?
-  endTime     Int?
   releaseDate DateTime
   isActive    Boolean  @default(false)
   createdAt   DateTime @default(now())

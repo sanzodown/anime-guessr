@@ -12,7 +12,13 @@ function getExtension(filename: string): string {
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+        }
+    }
 )
 
 export async function POST(request: Request) {
@@ -62,41 +68,26 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+    const { searchParams } = new URL(request.url)
+    const file = searchParams.get("file")
+
+    if (!file) {
+        return new Response("Missing file parameter", { status: 400 })
+    }
+
     try {
-        const { searchParams } = new URL(request.url)
-        const url = searchParams.get("url")
-
-        if (!url) {
-            return NextResponse.json(
-                { error: "No file URL provided" },
-                { status: 400 }
-            )
-        }
-
-        // Extract filename from Supabase URL
-        const fileName = url.split("/").pop()?.split("?")[0]
-        if (!fileName) {
-            return NextResponse.json(
-                { error: "Invalid file URL" },
-                { status: 400 }
-            )
-        }
-
-        const { error: deleteError } = await supabase
+        const { error } = await supabase
             .storage
             .from("scene-videos")
-            .remove([fileName])
+            .remove([file])
 
-        if (deleteError) {
-            throw deleteError
+        if (error) {
+            throw error
         }
 
-        return NextResponse.json({ success: true })
+        return new Response(null, { status: 204 })
     } catch (error) {
-        console.error("Delete error:", error)
-        return NextResponse.json(
-            { error: "Failed to delete file" },
-            { status: 500 }
-        )
+        console.error("Error deleting video:", error)
+        return new Response("Failed to delete video", { status: 500 })
     }
 }
