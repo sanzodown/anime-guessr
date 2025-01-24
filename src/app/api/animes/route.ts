@@ -24,6 +24,7 @@ const getAnimes = unstable_cache(
                         malId: true,
                         title: true,
                         titleJp: true,
+                        titleEn: true,
                         imageUrl: true,
                     },
                     orderBy: {
@@ -119,7 +120,7 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
     try {
         const body = await request.json()
-        const { id, title, titleJp } = body
+        const { id, title, titleJp, titleEn } = body
 
         if (!id || !title) {
             return NextResponse.json(
@@ -132,13 +133,15 @@ export async function PUT(request: Request) {
             where: { id },
             data: {
                 title,
-                titleJp
+                titleJp,
+                titleEn
             },
             select: {
                 id: true,
                 malId: true,
                 title: true,
                 titleJp: true,
+                titleEn: true,
                 imageUrl: true,
             }
         })
@@ -158,7 +161,7 @@ export async function PUT(request: Request) {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
-        const { malId, title, titleJp, imageUrl, synopsis } = body
+        const { malId, title, titleJp, titleEn, imageUrl, synopsis } = body
 
         if (!malId || !title) {
             return NextResponse.json(
@@ -174,6 +177,7 @@ export async function POST(request: NextRequest) {
             update: {
                 title,
                 titleJp: titleJp || undefined,
+                titleEn: titleEn || undefined,
                 imageUrl: supabaseImageUrl,
                 synopsis: synopsis || undefined
             },
@@ -181,6 +185,7 @@ export async function POST(request: NextRequest) {
                 malId,
                 title,
                 titleJp: titleJp || undefined,
+                titleEn: titleEn || undefined,
                 imageUrl: supabaseImageUrl,
                 synopsis: synopsis || undefined
             },

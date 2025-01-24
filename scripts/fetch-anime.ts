@@ -14,6 +14,7 @@ interface JikanResponse {
     data: Array<{
         mal_id: number
         title: string
+        title_english: string
         title_japanese: string
         images: {
             jpg: {
@@ -101,60 +102,56 @@ function isBaseAnime(title: string): boolean {
 }
 
 async function main() {
-    const processedTitles = new Set<string>()
+    const baseUrl = 'https://api.jikan.moe/v4/anime'
     let page = 1
-    const maxPages = 20 // Limit to 500 anime (25 per page)
+    let hasNextPage = true
 
-    while (page <= maxPages) {
-        try {
-            console.log(`Fetching page ${page}...`)
-            const data = await fetchWithRetry(`https://api.jikan.moe/v4/top/anime?page=${page}`)
+    while (hasNextPage) {
+        console.log(`Fetching page ${page}...`)
+        const response = await fetchWithRetry(`${baseUrl}?page=${page}`)
 
-            for (const anime of data.data) {
-                const baseTitle = anime.title.split(':')[0].trim()
+        for (const anime of response.data) {
+            if (!isBaseAnime(anime.title)) continue
 
-                if (anime.type !== 'TV' || !isBaseAnime(anime.title) || processedTitles.has(baseTitle)) {
-                    console.log(`Skipping ${anime.title} - ${!isBaseAnime(anime.title) ? 'Not base series' : 'Already processed'}`)
-                    continue
-                }
+            const imageUrl = anime.images.jpg.large_image_url
+            let uploadedImageUrl = null
 
-                try {
-                    const imageUrl = anime.images.jpg.large_image_url
-                    const supabaseImageUrl = await uploadImage(imageUrl, anime.mal_id)
-
-                    await prisma.anime.upsert({
-                        where: { malId: anime.mal_id },
-                        update: {
-                            title: baseTitle,
-                            titleJp: anime.title_japanese || undefined,
-                            imageUrl: supabaseImageUrl,
-                            synopsis: anime.synopsis || undefined
-                        },
-                        create: {
-                            malId: anime.mal_id,
-                            title: baseTitle,
-                            titleJp: anime.title_japanese || undefined,
-                            imageUrl: supabaseImageUrl,
-                            synopsis: anime.synopsis || undefined
-                        },
-                    })
-                    console.log(`Added/Updated: ${baseTitle}`)
-                    processedTitles.add(baseTitle)
-                } catch (error) {
-                    console.error(`Error processing ${baseTitle}:`, error)
-                }
+            try {
+                uploadedImageUrl = await uploadImage(imageUrl, anime.mal_id)
+            } catch (error) {
+                console.error(`Failed to upload image for ${anime.title}:`, error)
             }
 
-            if (!data.pagination.has_next_page || page >= maxPages) break
-            page++
-            await sleep(2000) // Wait 2 seconds between pages
-        } catch (error) {
-            console.error(`Error fetching page ${page}:`, error)
-            break
+            await prisma.anime.upsert({
+                where: { malId: anime.mal_id },
+                update: {
+                    title: anime.title,
+                    titleJp: anime.title_japanese || null,
+                    titleEn: anime.title_english || null,
+                    imageUrl: uploadedImageUrl,
+                    synopsis: anime.synopsis || null,
+                    updatedAt: new Date()
+                },
+                create: {
+                    malId: anime.mal_id,
+                    title: anime.title,
+                    titleJp: anime.title_japanese || null,
+                    titleEn: anime.title_english || null,
+                    imageUrl: uploadedImageUrl,
+                    synopsis: anime.synopsis || null
+                }
+            })
+
+            console.log(`Processed anime: ${anime.title}`)
+            await sleep(1000) // Rate limiting
         }
+
+        hasNextPage = response.pagination.has_next_page
+        page++
+        await sleep(4000) // Rate limiting between pages
     }
 
-    console.log(`Finished processing ${processedTitles.size} unique anime titles`)
+    console.log('Finished fetching anime data')
 }
 
 main()

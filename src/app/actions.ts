@@ -187,15 +187,10 @@ export async function getUserGuesses(sceneId: string) {
 
 export async function deleteAnime(formData: FormData) {
     try {
-        const validatedFields = DeleteAnimeSchema.safeParse({
-            animeId: formData.get("animeId")
-        })
-
-        if (!validatedFields.success) {
+        const animeId = formData.get("animeId")
+        if (!animeId || typeof animeId !== "string") {
             return { error: "Invalid anime ID" }
         }
-
-        const { animeId } = validatedFields.data
 
         // First check if there are any scenes using this anime
         const scenesCount = await prisma.scene.count({

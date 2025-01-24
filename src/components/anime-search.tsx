@@ -8,6 +8,7 @@ interface JikanAnime {
     mal_id: number
     title: string
     title_japanese: string
+    title_english: string | null
     images: {
         jpg: {
             large_image_url: string
@@ -57,6 +58,7 @@ export function AnimeSearch({ onSuccess }: AnimeSearchProps) {
                     malId: anime.mal_id,
                     title: anime.title,
                     titleJp: anime.title_japanese,
+                    titleEn: anime.title_english,
                     imageUrl: anime.images.jpg.large_image_url,
                     synopsis: anime.synopsis,
                 }),
@@ -107,7 +109,14 @@ export function AnimeSearch({ onSuccess }: AnimeSearchProps) {
                                     className="rounded"
                                 />
                                 <div>
-                                    <div className="font-medium">{anime.title}</div>
+                                    <div className="font-medium">
+                                        {anime.title_english || anime.title}
+                                    </div>
+                                    {anime.title_english && (
+                                        <div className="text-sm text-white/60">
+                                            {anime.title}
+                                        </div>
+                                    )}
                                     {anime.title_japanese && (
                                         <div className="text-sm text-white/60">
                                             {anime.title_japanese}

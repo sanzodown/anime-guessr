@@ -18,6 +18,7 @@ model Anime {
   malId       Int      @unique // MyAnimeList ID
   title       String
   titleJp     String?
+  titleEn     String?
   imageUrl    String?
   synopsis    String?
   createdAt   DateTime @default(now())

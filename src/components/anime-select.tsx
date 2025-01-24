@@ -12,6 +12,7 @@ interface Anime {
     title: string
     malId: number
     titleJp: string | null
+    titleEn: string | null
     imageUrl: string | null
 }
 
@@ -24,7 +25,8 @@ interface AnimeSelectProps {
 
 const fuseOptions = {
     keys: [
-        { name: "title", weight: 2 },
+        { name: "titleEn", weight: 5 },
+        { name: "title", weight: 3 },
         { name: "titleJp", weight: 1 }
     ],
     includeScore: true,
@@ -51,10 +53,17 @@ export function AnimeSelect({ onSelect, placeholder = "Search...", disabled, ani
 
         // Try substring match first
         const substringMatches = animes.filter(anime => {
-            const inTitle = anime.title.toLowerCase().includes(debouncedSearch.toLowerCase())
-            const inJp = anime.titleJp?.toLowerCase().includes(debouncedSearch.toLowerCase())
-
-            return inTitle || inJp
+            const searchLower = debouncedSearch.toLowerCase()
+            // Prioritize English title match first
+            if (anime.titleEn?.toLowerCase().includes(searchLower)) {
+                return true
+            }
+            // Then try main title
+            if (anime.title.toLowerCase().includes(searchLower)) {
+                return true
+            }
+            // Finally try Japanese title
+            return anime.titleJp?.toLowerCase().includes(searchLower) || false
         })
 
         if (substringMatches.length > 0) {
@@ -64,6 +73,7 @@ export function AnimeSelect({ onSelect, placeholder = "Search...", disabled, ani
         const fuzzyResults = fuse.search(debouncedSearch)
         console.log('Debug - Fuzzy results:', fuzzyResults.map(r => ({
             title: r.item.title,
+            titleEn: r.item.titleEn,
             score: r.score
         })))
 
@@ -181,8 +191,13 @@ export function AnimeSelect({ onSelect, placeholder = "Search...", disabled, ani
                                                 />
                                             )}
                                             <div>
-                                                <div>{anime.title}</div>
-                                                {anime.titleJp && (
+                                                <div className="font-medium">
+                                                    {anime.title}
+                                                </div>
+                                                {anime.titleEn && anime.titleEn !== anime.title && (
+                                                    <div className="text-sm text-white/60">{anime.titleEn}</div>
+                                                )}
+                                                {anime.titleJp && anime.titleJp !== anime.title && (
                                                     <div className="text-xs text-white/40">{anime.titleJp}</div>
                                                 )}
                                             </div>

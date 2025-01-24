@@ -13,6 +13,7 @@ interface Anime {
     title: string
     malId: number
     titleJp: string | null
+    titleEn: string | null
     imageUrl: string | null
 }
 
@@ -185,7 +186,10 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
                             )}
                             <div>
                                 <div className="text-sm text-white/80">{selectedAnime.title}</div>
-                                {selectedAnime.titleJp && (
+                                {selectedAnime.titleEn && selectedAnime.titleEn !== selectedAnime.title && (
+                                    <div className="text-sm text-white/60">{selectedAnime.titleEn}</div>
+                                )}
+                                {selectedAnime.titleJp && selectedAnime.titleJp !== selectedAnime.title && (
                                     <div className="text-xs text-white/40">{selectedAnime.titleJp}</div>
                                 )}
                             </div>

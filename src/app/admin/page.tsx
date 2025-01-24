@@ -16,6 +16,7 @@ interface Anime {
     malId: number
     title: string
     titleJp: string | null
+    titleEn: string | null
     imageUrl: string | null
     synopsis: string | null
 }
@@ -138,6 +139,7 @@ export default function AdminPage() {
 
         const formData = new FormData(e.currentTarget)
         const title = formData.get("title") as string
+        const titleEn = formData.get("titleEn") as string
         const titleJp = formData.get("titleJp") as string
 
         try {
@@ -149,6 +151,7 @@ export default function AdminPage() {
                 body: JSON.stringify({
                     id: editingAnime.id,
                     title,
+                    titleEn: titleEn || null,
                     titleJp: titleJp || null
                 }),
             })
@@ -245,8 +248,11 @@ export default function AdminPage() {
                                                         )}
                                                         <div>
                                                             <div className="font-medium">
-                                                                {scene.anime.title}
+                                                                {scene.anime.titleEn}
                                                             </div>
+                                                            {scene.anime.titleEn && scene.anime.titleEn !== scene.anime.title && (
+                                                                <div className="text-sm text-white/60">{scene.anime.title}</div>
+                                                            )}
                                                             <div className="text-sm text-white/60">
                                                                 Release: {new Date(scene.releaseDate).toLocaleDateString()}
                                                             </div>
@@ -313,6 +319,18 @@ export default function AdminPage() {
                                                                     />
                                                                 </div>
                                                                 <div>
+                                                                    <label htmlFor="titleEn" className="block text-sm font-medium text-white/60">
+                                                                        English Title
+                                                                    </label>
+                                                                    <input
+                                                                        type="text"
+                                                                        name="titleEn"
+                                                                        id="titleEn"
+                                                                        defaultValue={anime.titleEn || ""}
+                                                                        className="manga-input mt-1 w-full"
+                                                                    />
+                                                                </div>
+                                                                <div>
                                                                     <label htmlFor="titleJp" className="block text-sm font-medium text-white/60">
                                                                         Japanese Title
                                                                     </label>
@@ -356,12 +374,17 @@ export default function AdminPage() {
                                                                 )}
                                                                 <div>
                                                                     <div className="font-medium">
-                                                                        {anime.title}
+                                                                        {anime.titleEn || anime.title}
                                                                     </div>
+                                                                    {anime.title !== anime.titleEn && (
+                                                                        <div className="text-sm text-white/60">
+                                                                            {anime.title}
+                                                                        </div>
+                                                                    )}
                                                                     <div className="text-sm text-white/60">
                                                                         MAL ID: {anime.malId}
                                                                     </div>
-                                                                    {anime.titleJp && (
+                                                                    {anime.titleJp && anime.titleJp !== anime.title && (
                                                                         <div className="text-sm text-white/40">
                                                                             {anime.titleJp}
                                                                         </div>
