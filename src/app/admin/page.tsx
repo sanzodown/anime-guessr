@@ -42,6 +42,7 @@ interface Scene {
 export default function AdminPage() {
     const router = useRouter()
     const [animes, setAnimes] = useState<Anime[]>([])
+    const [filteredAnimes, setFilteredAnimes] = useState<Anime[]>([])
     const [scenes, setScenes] = useState<Scene[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<"scenes" | "anime">("scenes")
@@ -57,10 +58,11 @@ export default function AdminPage() {
     const fetchData = useCallback(async () => {
         try {
             setIsLoading(true)
-            const response = await fetch(`/api/animes?page=${page}&limit=${limit}&search=${searchQuery}`)
+            const response = await fetch(`/api/animes?limit=1000`)
             if (!response.ok) throw new Error("Failed to fetch animes")
             const data: AnimeResponse = await response.json()
             setAnimes(data.animes)
+            setFilteredAnimes(data.animes)
             setTotalAnimes(data.total)
 
             const scenesResponse = await fetch("/api/scenes")
@@ -72,11 +74,28 @@ export default function AdminPage() {
         } finally {
             setIsLoading(false)
         }
-    }, [page, limit, searchQuery])
+    }, [])
 
     useEffect(() => {
         fetchData()
     }, [fetchData])
+
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setFilteredAnimes(animes)
+            return
+        }
+
+        const query = searchQuery.toLowerCase()
+        const filtered = animes.filter(anime => {
+            return (
+                anime.title.toLowerCase().includes(query) ||
+                (anime.titleEn?.toLowerCase().includes(query)) ||
+                (anime.titleJp?.toLowerCase().includes(query))
+            )
+        })
+        setFilteredAnimes(filtered)
+    }, [searchQuery, animes])
 
     async function handleLogout() {
         await logout()
@@ -297,7 +316,7 @@ export default function AdminPage() {
                                             />
                                         </div>
                                         <div className="grid gap-4">
-                                            {animes.map((anime) => (
+                                            {filteredAnimes.map((anime) => (
                                                 <div
                                                     key={anime.id}
                                                     className="anime-card flex items-center justify-between p-4"
