@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
+import { deleteVideo } from "@/lib/supabase-storage"
 
 export async function GET() {
     const scenes = await prisma.scene.findMany({

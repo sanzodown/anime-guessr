@@ -34,7 +34,6 @@ export default function AdminPage() {
     const [scenes, setScenes] = useState<Scene[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<"scenes" | "anime">("scenes")
-    const [error, setError] = useState<string>()
 
     const fetchData = useCallback(async () => {
         try {
@@ -49,7 +48,7 @@ export default function AdminPage() {
             const scenesData = await scenesResponse.json()
             setScenes(scenesData)
         } catch (err) {
-            setError(err instanceof Error ? err.message : "An error occurred")
+            console.error("An error occurred:", err)
         } finally {
             setIsLoading(false)
         }

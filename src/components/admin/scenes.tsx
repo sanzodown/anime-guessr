@@ -32,14 +32,9 @@ interface AdminScenesProps {
 type TimeFilter = "past" | "today" | "future" | "all"
 
 export function AdminScenes({ initialScenes, onRefresh }: AdminScenesProps) {
-    const [scenes, setScenes] = useState<Scene[]>(initialScenes)
     const [isDeleting, setIsDeleting] = useState(false)
     const [error, setError] = useState<string>()
     const [timeFilter, setTimeFilter] = useState<TimeFilter>("all")
-
-    // Log scenes for debugging
-    console.log("Initial scenes:", initialScenes)
-    console.log("Current scenes:", scenes)
 
     const today = useMemo(() => {
         const date = new Date()
@@ -48,7 +43,7 @@ export function AdminScenes({ initialScenes, onRefresh }: AdminScenesProps) {
     }, [])
 
     const filteredScenes = useMemo(() => {
-        return scenes.filter(scene => {
+        return initialScenes.filter(scene => {
             const releaseDate = new Date(scene.releaseDate)
             releaseDate.setHours(0, 0, 0, 0)
 
@@ -63,7 +58,7 @@ export function AdminScenes({ initialScenes, onRefresh }: AdminScenesProps) {
                     return true
             }
         }).sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
-    }, [scenes, timeFilter, today])
+    }, [initialScenes, timeFilter, today])
 
     async function handleDeleteScene(formData: FormData) {
         if (!confirm("Are you sure you want to delete this scene?")) return
@@ -72,7 +67,7 @@ export function AdminScenes({ initialScenes, onRefresh }: AdminScenesProps) {
 
         try {
             const sceneId = formData.get("sceneId") as string
-            const scene = scenes.find(s => s.id === sceneId)
+            const scene = initialScenes.find(s => s.id === sceneId)
             if (!scene) throw new Error("Scene not found")
 
             // Delete the video file first
@@ -159,7 +154,6 @@ export function AdminScenes({ initialScenes, onRefresh }: AdminScenesProps) {
                         releaseDate.setHours(0, 0, 0, 0)
                         const isPast = releaseDate < today
                         const isToday = releaseDate.getTime() === today.getTime()
-                        const isFuture = releaseDate > today
 
                         return (
                             <div

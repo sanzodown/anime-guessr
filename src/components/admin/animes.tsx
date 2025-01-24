@@ -26,7 +26,6 @@ interface AdminAnimesProps {
 const ITEMS_PER_PAGE = 20
 
 export function AdminAnimes({ initialAnimes, onRefresh }: AdminAnimesProps) {
-    const [animes, setAnimes] = useState<Anime[]>(initialAnimes)
     const [isDeleting, setIsDeleting] = useState(false)
     const [error, setError] = useState<string>()
     const [searchQuery, setSearchQuery] = useState("")
@@ -36,18 +35,18 @@ export function AdminAnimes({ initialAnimes, onRefresh }: AdminAnimesProps) {
 
     const filteredAnimes = useMemo(() => {
         if (!searchQuery.trim()) {
-            return animes
+            return initialAnimes
         }
 
         const query = searchQuery.toLowerCase()
-        return animes.filter(anime => {
+        return initialAnimes.filter(anime => {
             return (
                 anime.title.toLowerCase().includes(query) ||
                 (anime.titleEn?.toLowerCase().includes(query)) ||
                 (anime.titleJp?.toLowerCase().includes(query))
             )
         })
-    }, [searchQuery, animes])
+    }, [searchQuery, initialAnimes])
 
     const totalPages = Math.ceil(filteredAnimes.length / ITEMS_PER_PAGE)
     const paginatedAnimes = useMemo(() => {
