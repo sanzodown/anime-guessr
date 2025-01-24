@@ -11,10 +11,6 @@ const LoginSchema = z.object({
     password: z.string().min(1),
 })
 
-const DeleteAnimeSchema = z.object({
-    animeId: z.string().min(1)
-})
-
 const DeleteSceneSchema = z.object({
     sceneId: z.string().min(1)
 })

@@ -7,7 +7,6 @@ import { motion } from "framer-motion"
 import { AnimeSelect } from "./anime-select"
 import { Upload } from "lucide-react"
 import Image from "next/image"
-import { uploadVideo } from "@/lib/supabase-storage"
 import { formatBytes } from "@/lib/utils"
 
 interface Anime {
@@ -131,7 +130,7 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
                             } else {
                                 reject(new Error("Invalid response format"))
                             }
-                        } catch (error) {
+                        } catch {
                             reject(new Error("Failed to parse response"))
                         }
                     } else {

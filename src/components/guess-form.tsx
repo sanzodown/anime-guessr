@@ -43,6 +43,7 @@ export function GuessForm({ previousGuesses, activeScene }: GuessFormProps) {
         title: string
         malId: number
         titleJp: string | null
+        titleEn: string | null
         imageUrl: string | null
     }>>([])
     const [isLoadingAnimes, setIsLoadingAnimes] = useState(true)

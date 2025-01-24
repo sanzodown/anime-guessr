@@ -1,11 +1,5 @@
-interface UploadProgress {
-    progress: number
-    speed: number
-}
-
 export async function uploadVideo(
     file: File,
-    onProgress?: (progress: UploadProgress) => void
 ): Promise<string> {
     const formData = new FormData()
     formData.append("file", file)
