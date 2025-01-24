@@ -4,6 +4,7 @@ import { z } from "zod"
 import { cookies } from "next/headers"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath, revalidateTag } from "next/cache"
+import { deleteVideo } from "@/lib/supabase-storage"
 
 const LoginSchema = z.object({
     username: z.string().min(1),
@@ -246,21 +247,12 @@ export async function deleteScene(formData: FormData) {
             where: { id: sceneId }
         })
 
-        // If the video is hosted on our VPS, delete the file
-        if (scene.videoUrl.startsWith(process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL!)) {
-            const filename = scene.videoUrl.split('/').pop()
-            if (filename) {
-                try {
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL}/delete/${filename}`, {
-                        method: 'DELETE',
-                    })
-
-                    if (!response.ok) {
-                        console.error(`Failed to delete video file: ${filename}`)
-                    }
-                } catch (error) {
-                    console.error('Error deleting video file:', error)
-                }
+        // Delete the video from Supabase storage
+        if (scene.videoUrl.includes("supabase")) {
+            try {
+                await deleteVideo(scene.videoUrl)
+            } catch (error) {
+                console.error("Error deleting video from storage:", error)
             }
         }
 

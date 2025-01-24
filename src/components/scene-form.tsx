@@ -7,6 +7,8 @@ import { motion } from "framer-motion"
 import { AnimeSelect } from "./anime-select"
 import { Upload } from "lucide-react"
 import Image from "next/image"
+import { uploadVideo } from "@/lib/supabase-storage"
+import { formatBytes } from "@/lib/utils"
 
 interface Anime {
     id: string
@@ -21,6 +23,12 @@ interface SceneFormProps {
     onSuccess: () => void
 }
 
+interface UploadState {
+    progress: number
+    speed: number
+    timeRemaining?: number
+}
+
 export function SceneForm({ onSuccess }: SceneFormProps) {
     const router = useRouter()
     const [error, setError] = useState<string>()
@@ -29,7 +37,10 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
     const [selectedAnime, setSelectedAnime] = useState<Anime | null>(null)
     const [animes, setAnimes] = useState<Anime[]>([])
     const [isLoadingAnimes, setIsLoadingAnimes] = useState(true)
-    const [uploadProgress, setUploadProgress] = useState<number>(0)
+    const [uploadState, setUploadState] = useState<UploadState>({
+        progress: 0,
+        speed: 0
+    })
     const [isUploading, setIsUploading] = useState(false)
     const [videoUrl, setVideoUrl] = useState<string>("")
 
@@ -75,49 +86,76 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
 
         setError(undefined)
         setIsUploading(true)
-        setUploadProgress(0)
-
-        const formData = new FormData()
-        formData.append("file", file)
+        setUploadState({ progress: 0, speed: 0 })
 
         try {
-            const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL}${process.env.NEXT_PUBLIC_UPLOAD_ENDPOINT}`, {
-                method: "POST",
-                body: formData,
-                mode: 'cors',
+            const xhr = new XMLHttpRequest()
+            let lastLoaded = 0
+            let lastTime = Date.now()
+
+            xhr.upload.addEventListener("progress", (event) => {
+                if (event.lengthComputable) {
+                    const currentTime = Date.now()
+                    const timeDiff = (currentTime - lastTime) / 1000 // Convert to seconds
+                    const loadedDiff = event.loaded - lastLoaded
+                    const currentSpeed = timeDiff > 0 ? loadedDiff / timeDiff : 0
+
+                    const progress = (event.loaded / event.total) * 100
+                    const timeRemaining = currentSpeed > 0
+                        ? (event.total - event.loaded) / currentSpeed
+                        : undefined
+
+                    setUploadState({
+                        progress,
+                        speed: currentSpeed,
+                        timeRemaining
+                    })
+
+                    lastLoaded = event.loaded
+                    lastTime = currentTime
+                }
             })
 
-            if (!uploadResponse.ok) {
-                const errorData = await uploadResponse.json().catch(() => ({}))
-                throw new Error(errorData.error || errorData.details || `Upload failed with status ${uploadResponse.status}`)
-            }
+            const formData = new FormData()
+            formData.append("file", file)
 
-            const data = await uploadResponse.json()
-            setVideoUrl(data.url)
-            setIsUploading(false)
-            setUploadProgress(100)
+            const url = await new Promise<string>((resolve, reject) => {
+                xhr.open("POST", "/api/upload")
+
+                xhr.onload = () => {
+                    if (xhr.status === 200) {
+                        try {
+                            const response = JSON.parse(xhr.responseText)
+                            if (response.url) {
+                                resolve(response.url)
+                            } else {
+                                reject(new Error("Invalid response format"))
+                            }
+                        } catch (error) {
+                            reject(new Error("Failed to parse response"))
+                        }
+                    } else {
+                        try {
+                            const error = JSON.parse(xhr.responseText)
+                            reject(new Error(error.error || "Upload failed"))
+                        } catch {
+                            reject(new Error(`Upload failed with status ${xhr.status}`))
+                        }
+                    }
+                }
+
+                xhr.onerror = () => reject(new Error("Network error occurred"))
+                xhr.send(formData)
+            })
+
+            setVideoUrl(url)
+            setUploadState(prev => ({ ...prev, progress: 100 }))
         } catch (error) {
             console.error("Upload error:", error)
-
-            // If the upload failed, try to get the latest video
-            try {
-                const latestResponse = await fetch(`${process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL}${process.env.NEXT_PUBLIC_LATEST_VIDEO_ENDPOINT}`, {
-                    mode: 'cors'
-                })
-                if (latestResponse.ok) {
-                    const data = await latestResponse.json()
-                    setVideoUrl(data.url)
-                    setIsUploading(false)
-                    setUploadProgress(100)
-                    return
-                }
-            } catch (latestError) {
-                console.error("Failed to get latest video:", latestError)
-            }
-
             setError(error instanceof Error ? error.message : "Failed to upload video")
+            setUploadState({ progress: 0, speed: 0 })
+        } finally {
             setIsUploading(false)
-            setUploadProgress(0)
         }
     }
 
@@ -258,11 +296,24 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
                             )}
                         </label>
                         {isUploading && (
-                            <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg bg-white/5">
-                                <div
-                                    className="h-full bg-purple-500 transition-all duration-300"
-                                    style={{ width: `${uploadProgress}%` }}
-                                />
+                            <div className="absolute inset-x-0 bottom-0 space-y-1 p-2 text-xs text-white/60">
+                                <div className="flex items-center justify-between px-1">
+                                    <span>
+                                        {uploadState.speed > 0 && `${formatBytes(uploadState.speed)}/s`}
+                                    </span>
+                                    <span>{Math.round(uploadState.progress)}%</span>
+                                </div>
+                                <div className="h-1 overflow-hidden rounded-full bg-white/5">
+                                    <div
+                                        className="h-full bg-purple-500 transition-all duration-300"
+                                        style={{ width: `${uploadState.progress}%` }}
+                                    />
+                                </div>
+                                {uploadState.timeRemaining && (
+                                    <div className="text-center">
+                                        {Math.ceil(uploadState.timeRemaining)}s remaining
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
