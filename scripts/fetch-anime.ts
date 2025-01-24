@@ -23,9 +23,14 @@ interface JikanResponse {
         }
         synopsis: string
         type: string
+        rating: string
+        score: number
+        popularity: number
+        status: string
     }>
     pagination: {
         has_next_page: boolean
+        last_visible_page: number
     }
 }
 
@@ -89,29 +94,113 @@ async function fetchWithRetry(url: string, retries = 3, delay = 2000): Promise<J
     throw new Error('Max retries reached')
 }
 
-function isBaseAnime(title: string): boolean {
-    // Skip sequels (indicated by Roman numerals, season numbers, or parts)
-    const sequelPattern = /(\s(II|III|IV|V|VI|VII|VIII|IX|X)|Season\s[2-9]|Part\s[2-9]|\s2nd|\s3rd|\d+th\sSeason)/i
-    if (sequelPattern.test(title)) return false
+function isVariantTitle(title: string, baseTitle: string): boolean {
+    // Exact match check first
+    if (title === baseTitle) return false
 
-    // Skip anything after a colon (usually indicates a subtitle or sequel)
-    const colonPattern = /:.+$/
-    if (colonPattern.test(title)) return false
+    const normalizedTitle = title.toLowerCase()
+    const normalizedBase = baseTitle.toLowerCase()
 
-    return true
+    // Common sequel/variant patterns
+    const patterns = [
+        // Sequels
+        `${baseTitle} 2`,
+        `${baseTitle} II`,
+        `${baseTitle} III`,
+        `${baseTitle} IV`,
+        `${baseTitle} V`,
+        `${baseTitle} Second Season`,
+        `${baseTitle} 2nd Season`,
+        `${baseTitle}2`,
+        // Common separators
+        `${baseTitle}:`,
+        `${baseTitle} -`,
+        `${baseTitle} ～`,
+        `${baseTitle} ~`,
+        `${baseTitle} (`,
+        // Common suffixes
+        `${baseTitle} The`,
+        `${baseTitle} TV`,
+        `${baseTitle} OVA`,
+        `${baseTitle} Movie`,
+        `${baseTitle} Special`,
+        `${baseTitle} Specials`,
+        // Specific patterns
+        `${baseTitle} A's`,
+        `${baseTitle} StrikerS`,
+        `${baseTitle} The Second Raid`,
+        `${baseTitle} Alternative`,
+        `${baseTitle} Unlimited`,
+        `${baseTitle} Zero`,
+        `${baseTitle} R`,
+        `${baseTitle} GT`,
+        `${baseTitle} Z`,
+        `${baseTitle} ZZ`,
+        `${baseTitle} Kai`,
+        `${baseTitle} Next`,
+        `${baseTitle} Final`,
+        `${baseTitle} Encore`,
+        `${baseTitle} Plus`,
+        `${baseTitle} Ex`,
+        `${baseTitle} S`,
+        // Year patterns
+        `${baseTitle} (`,
+        `${baseTitle} [`,
+    ]
+
+    // Check if title starts with any pattern
+    if (patterns.some(pattern => normalizedTitle.startsWith(normalizedBase) &&
+        (normalizedTitle === normalizedBase || normalizedTitle.startsWith(pattern.toLowerCase())))) {
+        return true
+    }
+
+    // Check for common word boundaries to avoid false positives
+    const commonBoundaries = ["!", "?", "♪", "☆", ".", ","]
+    if (normalizedTitle.startsWith(normalizedBase) &&
+        commonBoundaries.some(b => normalizedTitle.charAt(normalizedBase.length) === b)) {
+        return true
+    }
+
+    return false
+}
+
+function isBaseAnime(title: string, allTitles: string[]): boolean {
+    // Check if this title is a variant of any other title
+    return !allTitles.some(otherTitle => {
+        if (otherTitle === title) return false
+        return isVariantTitle(title, otherTitle)
+    })
 }
 
 async function main() {
-    const baseUrl = 'https://api.jikan.moe/v4/anime'
+    // Fetch top anime sorted by score
+    const baseUrl = 'https://api.jikan.moe/v4/top/anime'
     let page = 1
     let hasNextPage = true
+    let processedTitles: string[] = []
 
-    while (hasNextPage) {
-        console.log(`Fetching page ${page}...`)
-        const response = await fetchWithRetry(`${baseUrl}?page=${page}`)
+    while (hasNextPage && page <= 20) { // Limit to top 20 pages (500 anime)
+        console.log(`Fetching page ${page} of top anime...`)
+        const response = await fetchWithRetry(`${baseUrl}?page=${page}&type=tv&filter=bypopularity`)
 
+        // First pass: collect all titles for better duplicate detection
+        const allTitles = response.data
+            .filter(anime => anime.type === 'TV' && anime.rating !== 'Rx')
+            .map(anime => anime.title)
+
+        // Second pass: process anime
         for (const anime of response.data) {
-            if (!isBaseAnime(anime.title)) continue
+            // Skip non-TV and hentai
+            if (anime.type !== 'TV' || anime.rating === 'Rx') continue
+
+            // Skip if we've seen this title before
+            if (processedTitles.includes(anime.title)) continue
+
+            // Skip if this is a variant of an existing title
+            if (!isBaseAnime(anime.title, [...processedTitles, ...allTitles])) {
+                console.log(`Skipping variant: ${anime.title}`)
+                continue
+            }
 
             const imageUrl = anime.images.jpg.large_image_url
             let uploadedImageUrl = null
@@ -142,16 +231,17 @@ async function main() {
                 }
             })
 
-            console.log(`Processed anime: ${anime.title}`)
+            processedTitles.push(anime.title)
+            console.log(`Processed anime: ${anime.title} (Score: ${anime.score}, Popularity: ${anime.popularity})`)
             await sleep(1000) // Rate limiting
         }
 
-        hasNextPage = response.pagination.has_next_page
+        hasNextPage = response.pagination.has_next_page && page < response.pagination.last_visible_page
         page++
         await sleep(4000) // Rate limiting between pages
     }
 
-    console.log('Finished fetching anime data')
+    console.log(`Finished fetching top anime data. Processed ${processedTitles.length} unique titles.`)
 }
 
 main()

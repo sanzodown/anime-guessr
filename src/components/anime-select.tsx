@@ -160,13 +160,9 @@ export function AnimeSelect({ onSelect, placeholder = "Search...", disabled, ani
                             top: containerRef.current ? containerRef.current.getBoundingClientRect().bottom + 8 : 0,
                             width: containerRef.current ? containerRef.current.offsetWidth : '100%',
                             left: containerRef.current ? containerRef.current.getBoundingClientRect().left : 0,
-                            maxHeight: '300px',
-                            overflowY: 'auto',
-                            scrollbarWidth: 'thin',
-                            scrollbarColor: 'rgba(255, 255, 255, 0.1) transparent',
                         }}
                     >
-                        <Command.List className="max-h-[300px] overflow-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb:hover]:bg-white/20">
+                        <Command.List className="max-h-[300px] overflow-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
                             {results.length > 0 ? (
                                 <div className="space-y-1">
                                     {results.map((anime, index) => (
