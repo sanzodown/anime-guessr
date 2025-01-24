@@ -188,10 +188,10 @@ export function AnimeSelect({ onSelect, placeholder = "Search...", disabled, ani
                                             )}
                                             <div>
                                                 <div className="font-medium">
-                                                    {anime.title}
+                                                    {anime.titleEn || anime.title}
                                                 </div>
-                                                {anime.titleEn && anime.titleEn !== anime.title && (
-                                                    <div className="text-sm text-white/60">{anime.titleEn}</div>
+                                                {anime.title !== (anime.titleEn || anime.title) && (
+                                                    <div className="text-sm text-white/60">{anime.title}</div>
                                                 )}
                                                 {anime.titleJp && anime.titleJp !== anime.title && (
                                                     <div className="text-xs text-white/40">{anime.titleJp}</div>

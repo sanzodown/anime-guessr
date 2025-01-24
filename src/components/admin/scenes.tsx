@@ -176,10 +176,10 @@ export function AdminScenes({ initialScenes, onRefresh }: AdminScenesProps) {
                                             href={`/admin/scenes/${scene.id}`}
                                             className="text-sm font-medium hover:text-purple-400"
                                         >
-                                            {scene.anime.title}
+                                            {scene.anime.titleEn || scene.anime.title}
                                         </Link>
-                                        {scene.anime.titleEn && scene.anime.titleEn !== scene.anime.title && (
-                                            <div className="text-sm text-white/60">{scene.anime.titleEn}</div>
+                                        {scene.anime.title !== (scene.anime.titleEn || scene.anime.title) && (
+                                            <div className="text-sm text-white/60">{scene.anime.title}</div>
                                         )}
                                         <div className="mt-2 flex items-center gap-2 text-sm">
                                             <Calendar className="h-4 w-4" />

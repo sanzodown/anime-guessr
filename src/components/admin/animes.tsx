@@ -210,9 +210,9 @@ export function AdminAnimes({ initialAnimes, onRefresh }: AdminAnimesProps) {
                                             />
                                         )}
                                         <div className="flex-1">
-                                            <div className="font-medium">{anime.title}</div>
-                                            {anime.titleEn && anime.titleEn !== anime.title && (
-                                                <div className="text-sm text-white/60">{anime.titleEn}</div>
+                                            <div className="font-medium">{anime.titleEn || anime.title}</div>
+                                            {anime.title !== (anime.titleEn || anime.title) && (
+                                                <div className="text-sm text-white/60">{anime.title}</div>
                                             )}
                                             {anime.titleJp && anime.titleJp !== anime.title && (
                                                 <div className="text-xs text-white/40">{anime.titleJp}</div>
@@ -226,7 +226,7 @@ export function AdminAnimes({ initialAnimes, onRefresh }: AdminAnimesProps) {
                                                 <Pencil className="h-4 w-4" />
                                             </button>
                                             <form action={handleDeleteAnime}>
-                                                <input type="hidden" name="id" value={anime.id} />
+                                                <input type="hidden" name="animeId" value={anime.id} />
                                                 <button
                                                     type="submit"
                                                     className="rounded p-1 text-white/40 hover:bg-white/10 hover:text-white/60"

@@ -222,9 +222,9 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
                                 />
                             )}
                             <div>
-                                <div className="text-sm text-white/80">{selectedAnime.title}</div>
-                                {selectedAnime.titleEn && selectedAnime.titleEn !== selectedAnime.title && (
-                                    <div className="text-sm text-white/60">{selectedAnime.titleEn}</div>
+                                <div className="text-sm text-white/80">{selectedAnime.titleEn || selectedAnime.title}</div>
+                                {selectedAnime.title !== (selectedAnime.titleEn || selectedAnime.title) && (
+                                    <div className="text-sm text-white/60">{selectedAnime.title}</div>
                                 )}
                                 {selectedAnime.titleJp && selectedAnime.titleJp !== selectedAnime.title && (
                                     <div className="text-xs text-white/40">{selectedAnime.titleJp}</div>
