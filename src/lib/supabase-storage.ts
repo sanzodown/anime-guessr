@@ -1,59 +1,41 @@
+import { createClient } from "@supabase/supabase-js"
+
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+async function ensureAuthenticated() {
+    const adminSessionResponse = await fetch('/api/auth', {
+        method: 'GET',
+        credentials: 'include'
+    })
+
+    if (!adminSessionResponse.ok) {
+        throw new Error('Not authenticated - Access denied')
+    }
+}
+
 export async function uploadVideo(file: File, onProgress?: (progress: number, speed: number, timeRemaining?: number) => void) {
     try {
-        return new Promise<string>((resolve, reject) => {
-            const xhr = new XMLHttpRequest()
-            const formData = new FormData()
-            formData.append("file", file)
+        await ensureAuthenticated()
 
-            let lastLoaded = 0
-            let lastTime = Date.now()
+        const formData = new FormData()
+        formData.append('file', file)
 
-            xhr.upload.addEventListener("progress", (event) => {
-                if (event.lengthComputable && onProgress) {
-                    const currentTime = Date.now()
-                    const timeDiff = (currentTime - lastTime) / 1000
-                    const loadedDiff = event.loaded - lastLoaded
-                    const currentSpeed = timeDiff > 0 ? loadedDiff / timeDiff : 0
-
-                    const progress = (event.loaded / event.total) * 100
-                    const timeRemaining = currentSpeed > 0
-                        ? (event.total - event.loaded) / currentSpeed
-                        : undefined
-
-                    onProgress(progress, currentSpeed, timeRemaining)
-
-                    lastLoaded = event.loaded
-                    lastTime = currentTime
-                }
-            })
-
-            xhr.onload = async () => {
-                if (xhr.status === 200) {
-                    try {
-                        const response = JSON.parse(xhr.responseText)
-                        if (response.url) {
-                            resolve(response.url)
-                        } else {
-                            reject(new Error("Invalid response format"))
-                        }
-                    } catch {
-                        reject(new Error("Failed to parse response"))
-                    }
-                } else {
-                    try {
-                        const error = JSON.parse(xhr.responseText)
-                        reject(new Error(error.error || "Upload failed"))
-                    } catch {
-                        reject(new Error(`Upload failed with status ${xhr.status}`))
-                    }
-                }
-            }
-
-            xhr.onerror = () => reject(new Error("Network error occurred"))
-
-            xhr.open("POST", "/api/upload")
-            xhr.send(formData)
+        const response = await fetch('/api/storage', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
         })
+
+        if (!response.ok) {
+            const error = await response.json()
+            throw new Error(error.error || 'Upload failed')
+        }
+
+        const { url } = await response.json()
+        return url
     } catch (error) {
         console.error("Upload error:", error)
         throw error
@@ -61,23 +43,23 @@ export async function uploadVideo(file: File, onProgress?: (progress: number, sp
 }
 
 export async function deleteVideo(fileName: string) {
-    // For absolute URLs (like those from Supabase), extract just the filename
-    const filename = fileName.includes('/') ? fileName.split('/').pop()! : fileName
-
     try {
-        const response = await fetch(`/api/upload?file=${encodeURIComponent(filename)}`, {
-            method: "DELETE",
+        await ensureAuthenticated()
+
+        const filename = fileName.includes('/') ? fileName.split('/').pop()! : fileName
+
+        const response = await fetch(`/api/storage?file=${encodeURIComponent(filename)}`, {
+            method: 'DELETE',
+            credentials: 'include'
         })
 
-        if (response.status === 204 || response.status === 404) {
-            return
+        if (!response.ok && response.status !== 404) {
+            const error = await response.json()
+            throw new Error(error.error || 'Delete failed')
         }
-
-        const data = await response.json()
-        console.warn("Delete warning:", data.error || "Unexpected response")
-    } catch (fetchError: unknown) {
-        if (fetchError instanceof Error && !fetchError.message.includes('Failed to parse URL')) {
-            console.warn("Delete warning:", fetchError)
+    } catch (error: unknown) {
+        if (error instanceof Error && !error.message.includes('Failed to parse URL')) {
+            console.warn("Delete warning:", error)
         }
     }
 }
