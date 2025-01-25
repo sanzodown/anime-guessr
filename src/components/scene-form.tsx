@@ -89,9 +89,7 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
         setUploadState({ progress: 0, speed: 0 })
 
         try {
-            const url = await uploadVideo(file, (progress, speed, timeRemaining) => {
-                setUploadState({ progress, speed, timeRemaining })
-            })
+            const url = await uploadVideo(file)
             setVideoUrl(url)
             setUploadState(prev => ({ ...prev, progress: 100 }))
         } catch (error) {

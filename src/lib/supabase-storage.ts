@@ -1,10 +1,3 @@
-import { createClient } from "@supabase/supabase-js"
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 async function ensureAuthenticated() {
     const adminSessionResponse = await fetch('/api/auth', {
         method: 'GET',
@@ -16,7 +9,7 @@ async function ensureAuthenticated() {
     }
 }
 
-export async function uploadVideo(file: File, onProgress?: (progress: number, speed: number, timeRemaining?: number) => void) {
+export async function uploadVideo(file: File) {
     try {
         await ensureAuthenticated()
 

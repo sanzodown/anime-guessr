@@ -8,7 +8,7 @@ const adminSupabase = createClient(
 )
 
 async function isAuthenticated() {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const adminSession = cookieStore.get('admin_session')
     return !!adminSession
 }
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
         const extension = file.name.split('.').pop()
         const uniqueFileName = `${crypto.randomUUID()}.${extension}`
 
-        const { error: uploadError, data } = await adminSupabase
+        const { error: uploadError } = await adminSupabase
             .storage
             .from("scene-videos")
             .upload(uniqueFileName, file, {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 
 export async function GET() {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const adminSession = cookieStore.get('admin_session')
 
     if (!adminSession) {
@@ -26,7 +26,8 @@ export async function POST(request: Request) {
             )
         }
 
-        cookies().set('admin_session', 'true', {
+        const cookieStore = await cookies()
+        cookieStore.set('admin_session', 'true', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
