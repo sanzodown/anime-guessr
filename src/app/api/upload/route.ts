@@ -2,16 +2,7 @@ import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 import crypto from "crypto"
 
-export const runtime = 'nodejs'
-export const maxDuration = 60
-
-export const config = {
-    api: {
-        bodyParser: {
-            sizeLimit: '50mb'
-        }
-    }
-}
+export const runtime = 'edge'
 
 function generateUUID(): string {
     return crypto.randomUUID()
