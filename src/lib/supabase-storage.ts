@@ -61,26 +61,23 @@ export async function uploadVideo(file: File, onProgress?: (progress: number, sp
 }
 
 export async function deleteVideo(fileName: string) {
+    // For absolute URLs (like those from Supabase), extract just the filename
+    const filename = fileName.includes('/') ? fileName.split('/').pop()! : fileName
+
     try {
-        const filename = fileName.includes('/') ? fileName.split('/').pop()! : fileName
+        const response = await fetch(`/api/upload?file=${encodeURIComponent(filename)}`, {
+            method: "DELETE",
+        })
 
-        try {
-            const response = await fetch(`/api/upload?file=${encodeURIComponent(filename)}`, {
-                method: "DELETE",
-            })
-
-            if (response.status === 204 || response.status === 404) {
-                return
-            }
-
-            const data = await response.json()
-            console.warn("Delete warning:", data.error || "Unexpected response")
-        } catch (fetchError: any) {
-            if (!fetchError.message?.includes('Failed to parse URL')) {
-                console.warn("Delete warning:", fetchError)
-            }
+        if (response.status === 204 || response.status === 404) {
+            return
         }
-    } catch (error) {
-        // Ignore all errors since deletion usually succeeds anyway
+
+        const data = await response.json()
+        console.warn("Delete warning:", data.error || "Unexpected response")
+    } catch (fetchError: unknown) {
+        if (fetchError instanceof Error && !fetchError.message.includes('Failed to parse URL')) {
+            console.warn("Delete warning:", fetchError)
+        }
     }
 }
