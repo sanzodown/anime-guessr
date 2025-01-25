@@ -16,9 +16,17 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/admin/login", request.url))
     }
 
+    if (request.nextUrl.pathname.startsWith('/api/upload')) {
+        return NextResponse.next({
+            headers: {
+                'max-body-size': '50mb',
+            },
+        })
+    }
+
     return NextResponse.next()
 }
 
 export const config = {
-    matcher: ["/admin", "/admin/:path*"]
+    matcher: ["/admin", "/admin/:path*", "/api/upload"],
 }
