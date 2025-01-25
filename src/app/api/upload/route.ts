@@ -1,11 +1,16 @@
 import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
-import crypto from "crypto"
 
 export const runtime = 'edge'
 
 function generateUUID(): string {
-    return crypto.randomUUID()
+    const array = new Uint8Array(16)
+    crypto.getRandomValues(array)
+
+    // Convert to hex string
+    return Array.from(array)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
 }
 
 function getExtension(filename: string): string {
