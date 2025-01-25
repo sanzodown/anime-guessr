@@ -1,22 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 
-export const runtime = 'edge'
-
-function generateUUID(): string {
-    const array = new Uint8Array(16)
-    crypto.getRandomValues(array)
-
-    // Convert to hex string
-    return Array.from(array)
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('')
-}
-
-function getExtension(filename: string): string {
-    return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 1)
-}
-
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -43,8 +27,8 @@ export async function POST(request: Request) {
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
 
-        const extension = getExtension(file.name)
-        const uniqueFileName = `${generateUUID()}.${extension}`
+        const extension = file.name.split('.').pop()
+        const uniqueFileName = `${crypto.randomUUID()}.${extension}`
 
         const { error: uploadError } = await supabase
             .storage

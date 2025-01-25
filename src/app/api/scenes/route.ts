@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
-import { deleteVideo } from "@/lib/supabase-storage"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 
 export async function GET() {
     const scenes = await prisma.scene.findMany({
@@ -49,7 +49,14 @@ export async function DELETE(request: Request) {
             const videoUrl = new URL(scene.videoUrl)
             const filename = videoUrl.pathname.split("/").pop()
             if (filename) {
-                await deleteVideo(filename)
+                const { error } = await supabaseAdmin
+                    .storage
+                    .from("scene-videos")
+                    .remove([filename])
+
+                if (error) {
+                    throw error
+                }
             }
         }
 

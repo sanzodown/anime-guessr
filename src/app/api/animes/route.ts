@@ -3,7 +3,7 @@ import { NextResponse, NextRequest } from "next/server"
 import { unstable_cache } from "next/cache"
 import { revalidateTag } from "next/cache"
 import { Prisma } from "@prisma/client"
-import { createClient } from "@supabase/supabase-js"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 
 const getAnimes = unstable_cache(
     async (page: number, limit: number, search?: string) => {
@@ -49,11 +49,6 @@ const getAnimes = unstable_cache(
     }
 )
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 async function uploadImage(url: string, malId: number): Promise<string> {
     try {
         const response = await fetch(url)
@@ -62,7 +57,7 @@ async function uploadImage(url: string, malId: number): Promise<string> {
         const buffer = await response.arrayBuffer()
         const fileName = `anime-${malId}.jpg`
 
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .storage
             .from("anime-images")
             .upload(fileName, buffer, {
@@ -72,7 +67,7 @@ async function uploadImage(url: string, malId: number): Promise<string> {
 
         if (error) throw error
 
-        const { data: { publicUrl } } = supabase
+        const { data: { publicUrl } } = supabaseAdmin
             .storage
             .from("anime-images")
             .getPublicUrl(fileName)

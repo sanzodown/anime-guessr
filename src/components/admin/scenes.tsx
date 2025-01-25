@@ -7,6 +7,7 @@ import { deleteScene } from "@/app/actions"
 import { Trash2, Calendar } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { deleteVideo } from "@/lib/supabase-storage"
 
 interface Scene {
     id: string
@@ -73,11 +74,10 @@ export function AdminScenes({ initialScenes, onRefresh }: AdminScenesProps) {
             // Delete the video file first
             const videoPath = scene.videoUrl.split("/").pop()
             if (videoPath) {
-                const deleteRes = await fetch(`/api/upload?file=${videoPath}`, {
-                    method: "DELETE",
-                })
-                if (!deleteRes.ok) {
-                    console.error("Failed to delete video file")
+                try {
+                    await deleteVideo(videoPath)
+                } catch (error) {
+                    console.error("Failed to delete video file:", error)
                 }
             }
 

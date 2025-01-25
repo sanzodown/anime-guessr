@@ -8,6 +8,7 @@ import { AnimeSelect } from "./anime-select"
 import { Upload } from "lucide-react"
 import Image from "next/image"
 import { formatBytes } from "@/lib/utils"
+import { uploadVideo } from "@/lib/supabase-storage"
 
 interface Anime {
     id: string
@@ -88,65 +89,9 @@ export function SceneForm({ onSuccess }: SceneFormProps) {
         setUploadState({ progress: 0, speed: 0 })
 
         try {
-            const xhr = new XMLHttpRequest()
-            let lastLoaded = 0
-            let lastTime = Date.now()
-
-            xhr.upload.addEventListener("progress", (event) => {
-                if (event.lengthComputable) {
-                    const currentTime = Date.now()
-                    const timeDiff = (currentTime - lastTime) / 1000 // Convert to seconds
-                    const loadedDiff = event.loaded - lastLoaded
-                    const currentSpeed = timeDiff > 0 ? loadedDiff / timeDiff : 0
-
-                    const progress = (event.loaded / event.total) * 100
-                    const timeRemaining = currentSpeed > 0
-                        ? (event.total - event.loaded) / currentSpeed
-                        : undefined
-
-                    setUploadState({
-                        progress,
-                        speed: currentSpeed,
-                        timeRemaining
-                    })
-
-                    lastLoaded = event.loaded
-                    lastTime = currentTime
-                }
+            const url = await uploadVideo(file, (progress, speed, timeRemaining) => {
+                setUploadState({ progress, speed, timeRemaining })
             })
-
-            const formData = new FormData()
-            formData.append("file", file)
-
-            const url = await new Promise<string>((resolve, reject) => {
-                xhr.open("POST", "/api/upload")
-
-                xhr.onload = () => {
-                    if (xhr.status === 200) {
-                        try {
-                            const response = JSON.parse(xhr.responseText)
-                            if (response.url) {
-                                resolve(response.url)
-                            } else {
-                                reject(new Error("Invalid response format"))
-                            }
-                        } catch {
-                            reject(new Error("Failed to parse response"))
-                        }
-                    } else {
-                        try {
-                            const error = JSON.parse(xhr.responseText)
-                            reject(new Error(error.error || "Upload failed"))
-                        } catch {
-                            reject(new Error(`Upload failed with status ${xhr.status}`))
-                        }
-                    }
-                }
-
-                xhr.onerror = () => reject(new Error("Network error occurred"))
-                xhr.send(formData)
-            })
-
             setVideoUrl(url)
             setUploadState(prev => ({ ...prev, progress: 100 }))
         } catch (error) {
